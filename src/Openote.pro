@@ -27,11 +27,23 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    dialogabout.cpp
+    dialogabout.cpp \
+    OpenTable/ontablecolumn.cpp \
+    OpenTable/ontableintcolumn.cpp \
+    OpenTable/ontabledoublecolumn.cpp \
+    OpenTable/ontablestringcolumn.cpp \
+    OpenTable/ontable.cpp
 
 HEADERS += \
         mainwindow.h \
-    dialogabout.h
+    dialogabout.h \
+    OpenTable/ontablecolumn.h \
+    OpenTable/ontablecolumn_p.h \
+    OpenTable/ontableintcolumn.h \
+    OpenTable/ontabledoublecolumn.h \
+    OpenTable/ontablestringcolumn.h \
+    OpenTable/ontable.h \
+    OpenTable/ontable_p.h
 
 FORMS += \
     dialogabout.ui \
