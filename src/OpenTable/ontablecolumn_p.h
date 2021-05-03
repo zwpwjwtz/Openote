@@ -10,7 +10,7 @@ class ONTableColumnPrivate
 {
 public:
     ONTableColumnPrivate();
-    ~ONTableColumnPrivate();
+    ONTableColumnPrivate(const ONTableColumnPrivate& src);
 
     char* bindingFile;
     std::map<int, char*> data;

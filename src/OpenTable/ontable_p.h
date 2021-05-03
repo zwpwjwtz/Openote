@@ -21,7 +21,7 @@ public:
     std::vector<int> columnIDList;
     std::vector<std::string> columnNameList;
 
-    std::vector<ONTableColumn> columnList;
+    std::vector<ONTableColumn*> columnList;
 
     size_t getColumnIndexByID(int columnID);
 };

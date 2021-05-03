@@ -37,7 +37,11 @@ void ONTableDoubleColumn::set(int key, double value)
         d->data.insert(std::make_pair(key, static_cast<char*>(data)));
     }
     else
+    {
+        if ((*pos).second == nullptr)
+            (*pos).second = reinterpret_cast<char*>(new double);
         memcpy((*pos).second, &value, sizeof(double));
+    }
 }
 
 void ONTableDoubleColumn::remove(int key)

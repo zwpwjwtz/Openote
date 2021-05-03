@@ -11,6 +11,13 @@ ONTableColumn::ONTableColumn()
     d_ptr = new ONTableColumnPrivate();
 }
 
+ONTableColumn::ONTableColumn(const ONTableColumn& src)
+{
+    ID = src.ID;
+    typeID = src.typeID;
+    d_ptr = new ONTableColumnPrivate(*(src.d_ptr));
+}
+
 ONTableColumn::ONTableColumn(ONTableColumnPrivate* data)
 {
     if (data == nullptr)
@@ -21,6 +28,8 @@ ONTableColumn::ONTableColumn(ONTableColumnPrivate* data)
 
 ONTableColumn::~ONTableColumn()
 {
+    if (d_ptr->bindingFile != nullptr)
+        delete[] d_ptr->bindingFile;
     delete d_ptr;
 }
 
@@ -79,8 +88,16 @@ ONTableColumnPrivate::ONTableColumnPrivate()
     bindingFile = nullptr;
 }
 
-ONTableColumnPrivate::~ONTableColumnPrivate()
+ONTableColumnPrivate::ONTableColumnPrivate(const ONTableColumnPrivate& src)
 {
-    if (bindingFile != nullptr)
-        delete[] bindingFile;
+    if (src.bindingFile == nullptr)
+        bindingFile = nullptr;
+    else
+    {
+        bindingFile = new char[strlen(src.bindingFile) + 1];
+        strcpy(bindingFile, src.bindingFile);
+    }
+
+    // Do a shallow copy for the data (pointers), as the data type is unknown
+    data = src.data;
 }

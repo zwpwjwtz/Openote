@@ -47,7 +47,8 @@ void ONTableStringColumn::set(int key, const std::string& value)
         d->data.insert(std::make_pair(key, data));
     else
     {
-        delete (*pos).second;
+        if ((*pos).second != nullptr)
+            delete (*pos).second;
         (*pos).second = data;
     }
 }

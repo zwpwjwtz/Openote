@@ -13,6 +13,7 @@ public:
     int typeID;
 
     ONTableColumn();
+    ONTableColumn(const ONTableColumn& src);
     virtual ~ONTableColumn();
 
     void clear() const;
