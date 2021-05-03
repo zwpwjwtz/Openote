@@ -16,6 +16,9 @@ public:
     virtual void set(int key, int value = 0);
     virtual void remove(int key);
 
+    virtual bool load();
+    virtual bool save();
+
 private:
     ONTableColumnPrivate* d;
 };

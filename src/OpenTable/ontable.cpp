@@ -1,9 +1,17 @@
 #include <algorithm>
-#include "ontable.h"
+#include <cstring>
+#include <sstream>
 #include "ontable_p.h"
 #include "ontableintcolumn.h"
 #include "ontabledoublecolumn.h"
 #include "ontablestringcolumn.h"
+#include "utils/filesystem.h"
+
+#define ONTABLE_TABLE_INDEX_FILE_NAME      "ontable-index"
+#define ONTABLE_TABLE_INDEX_FILE_HEADER    "ONTABLEINDEX"
+#define ONTABLE_TABLE_INDEX_FILE_VERSION   "1.0\n"
+
+#define ONTABLE_TABLE_IO_BUFFER_MAXLEN     256
 
 
 ONTable::ONTable()
@@ -26,7 +34,7 @@ ONTable::~ONTable()
     delete d_ptr;
 }
 
-int ONTable::ID()
+int ONTable::ID() const
 {
     return d_ptr->ID;
 }
@@ -36,7 +44,7 @@ void ONTable::setID(int ID)
     d_ptr->ID = ID;
 }
 
-std::string ONTable::name()
+std::string ONTable::name() const
 {
     return d_ptr->name;
 }
@@ -46,36 +54,36 @@ void ONTable::setName(const std::string& name)
     d_ptr->name = name;
 }
 
-int ONTable::countRow()
+int ONTable::countRow() const
 {
     return d_ptr->IDList.size();
 }
 
-int ONTable::countColumn()
+int ONTable::countColumn() const
 {
     return d_ptr->columnList.size();
 }
 
-bool ONTable::existsRow(int ID)
+bool ONTable::existsRow(int ID) const
 {
     return std::find(d_ptr->IDList.cbegin(),
                      d_ptr->IDList.cend(),
                      ID) != d_ptr->IDList.cend();
 }
 
-bool ONTable::existsColumn(int ID)
+bool ONTable::existsColumn(int ID) const
 {
     return std::find(d_ptr->columnIDList.cbegin(),
                      d_ptr->columnIDList.cend(),
                      ID) != d_ptr->columnIDList.cend();
 }
 
-std::list<int> ONTable::IDs()
+std::list<int> ONTable::IDs() const
 {
     return d_ptr->IDList;
 }
 
-std::vector<std::string> ONTable::columnNames()
+std::vector<std::string> ONTable::columnNames() const
 {
     return d_ptr->columnNameList;
 }
@@ -84,7 +92,14 @@ void ONTable::clear()
 {
     std::vector<ONTableColumn*>& columns = d_ptr->columnList;
     for (size_t i=0; i<columns.size(); i++)
+    {
         columns[i]->clear();
+        delete columns[i];
+    }
+    columns.clear();
+    d_ptr->columnIDList.clear();
+    d_ptr->columnTypeIDList.clear();
+    d_ptr->columnNameList.clear();
     d_ptr->IDList.clear();
 }
 
@@ -126,16 +141,50 @@ int ONTable::newColumn(const std::string& name, ColumnType columnType)
     emptyColumn->typeID = columnType;
     d_ptr->columnList.push_back(emptyColumn);
     d_ptr->columnIDList.push_back(availableID);
+    d_ptr->columnTypeIDList.push_back(columnType);
     d_ptr->columnNameList.push_back(name);
 
     return availableID;
+}
+
+int ONTable::readInt(int ID, int columnID) const
+{
+    size_t columnIndex = d_ptr->getColumnIndexByID(columnID);
+#ifdef ONTABLE_COLUMN_TYPE_CHECK
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::Integer)
+        return false;
+#endif
+    return dynamic_cast<ONTableIntColumn*>
+                (d_ptr->columnList[columnIndex])->valueAsInt(ID);
+}
+
+double ONTable::readDouble(int ID, int columnID) const
+{
+    size_t columnIndex = d_ptr->getColumnIndexByID(columnID);
+#ifdef ONTABLE_COLUMN_TYPE_CHECK
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::Double)
+        return false;
+#endif
+    return dynamic_cast<ONTableDoubleColumn*>
+                (d_ptr->columnList[columnIndex])->valueAsDouble(ID);
+}
+
+std::string ONTable::readString(int ID, int columnID) const
+{
+    size_t columnIndex = d_ptr->getColumnIndexByID(columnID);
+#ifdef ONTABLE_COLUMN_TYPE_CHECK
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::String)
+        return false;
+#endif
+    return dynamic_cast<ONTableStringColumn*>
+                (d_ptr->columnList[columnIndex])->valueAsString(ID);
 }
 
 bool ONTable::modify(int ID, int columnID, const int& value)
 {
     size_t columnIndex = d_ptr->getColumnIndexByID(columnID);
 #ifdef ONTABLE_COLUMN_TYPE_CHECK
-    if (d_ptr->columnList[columnIndex].typeID() != ColumnType::Integer)
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::Integer)
         return false;
 #endif
     dynamic_cast<ONTableIntColumn*>
@@ -147,7 +196,7 @@ bool ONTable::modify(int ID, int columnID, const double& value)
 {
     size_t columnIndex = d_ptr->getColumnIndexByID(columnID);
 #ifdef ONTABLE_COLUMN_TYPE_CHECK
-    if (d_ptr->columnList[columnIndex].typeID() != ColumnType::Double)
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::Double)
         return false;
 #endif
     dynamic_cast<ONTableDoubleColumn*>
@@ -159,7 +208,7 @@ bool ONTable::modify(int ID, int columnID, const std::string& value)
 {
     size_t columnIndex = d_ptr->getColumnIndexByID(columnID);
 #ifdef ONTABLE_COLUMN_TYPE_CHECK
-    if (d_ptr->columnList[columnIndex].typeID() != ColumnType::String)
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::String)
         return false;
 #endif
     dynamic_cast<ONTableStringColumn*>
@@ -187,12 +236,127 @@ void ONTable::removeColumn(int columnID)
             d_ptr->columnList.erase(i);
 }
 
+std::string ONTable::bindingDirectory() const
+{
+    return d_ptr->bindingDirectory;
+}
+
+bool ONTable::setBindingDirectory(const std::string& path)
+{
+    if (!utils_isDirectory(path.c_str()))
+        return false;
+    d_ptr->bindingDirectory = path;
+    return true;
+}
+
+std::string ONTable::fileSuffix() const
+{
+    return d_ptr->fileSuffix;
+}
+
+void ONTable::setFileSuffix(const std::string& suffix)
+{
+    d_ptr->fileSuffix = suffix;
+}
+
+bool ONTable::load()
+{
+    if (d_ptr->bindingDirectory.empty())
+        return false;
+
+    // Read column information from the index file
+    std::string indexFilename = d_ptr->getIndexFilename();
+    if (!utils_isFile(indexFilename.c_str()))
+        return false;
+
+    char buffer[ONTABLE_TABLE_IO_BUFFER_MAXLEN];
+    FILE* f = fopen(indexFilename.c_str(), "rb");
+
+    // Check for the index file header
+    fread(buffer, 1, strlen(ONTABLE_TABLE_INDEX_FILE_HEADER), f);
+    if (strncmp(buffer, ONTABLE_TABLE_INDEX_FILE_HEADER,
+                strlen(ONTABLE_TABLE_INDEX_FILE_HEADER)) != 0)
+    {
+        fclose(f);
+        return false;
+    }
+
+    clear();
+
+    // Ignore version check
+    fseek(f, strlen(ONTABLE_TABLE_INDEX_FILE_VERSION), SEEK_CUR);
+
+    char* pos, *posS, *posE;
+    int columnID, columnTypeID;
+    std::string columnName;
+    std::string columnFilename;
+    while (!feof(f))
+    {
+        if (fgets(buffer, '\n', f) != buffer)
+            break;
+
+        // Parse the column index, the column type ID and
+        // the column name from each line
+        columnID = static_cast<int>(strtold(buffer, &pos));
+        if (buffer == pos)
+            continue;
+
+        columnTypeID = static_cast<int>(strtold(pos + 1, &pos));
+        if (buffer == pos)
+            continue;
+
+        posS = strstr(pos + 1, "\"");
+        if (!posS)
+            continue;
+        posE = strstr(posS + 1, "\"");
+        if (!posE)
+            continue;
+        columnName = std::string(posS + 1, posE - posS - 1);
+
+        if (!d_ptr->loadColumn(columnID, columnTypeID, columnName))
+        {
+            fclose(f);
+            return false;
+        }
+    }
+    fclose(f);
+    return true;
+}
+
+bool ONTable::save()
+{
+    size_t i;
+    for (i=0; i<d_ptr->columnList.size(); i++)
+    {
+        if (!d_ptr->saveColumn(i))
+            return false;
+    }
+
+    // Update the index file
+    FILE* f = fopen(d_ptr->getIndexFilename().c_str(), "wb");
+    if (!f)
+        return false;
+    fputs(ONTABLE_TABLE_INDEX_FILE_HEADER, f);
+    fputs(ONTABLE_TABLE_INDEX_FILE_VERSION, f);
+
+    for (i=0; i<d_ptr->columnList.size(); i++)
+    {
+        fprintf(f, "%d,%d,\"%s\"\n",
+                d_ptr->columnIDList[i],
+                d_ptr->columnTypeIDList[i],
+                d_ptr->columnNameList[i].c_str());
+    }
+
+    fclose(f);
+    return true;
+}
+
 ONTablePrivate::ONTablePrivate()
 {
     ID = 0;
 }
 
-size_t ONTablePrivate::getColumnIndexByID(int columnID)
+size_t ONTablePrivate::getColumnIndexByID(int columnID) const
 {
     for (size_t i=0; i<columnIDList.size(); i++)
     {
@@ -200,4 +364,147 @@ size_t ONTablePrivate::getColumnIndexByID(int columnID)
             return i;
     }
     return -1;
+}
+
+std::string ONTablePrivate::getIndexFilename() const
+{
+    std::string indexFilename;
+
+    if (bindingDirectory.empty() ||
+        !utils_isDirectory(bindingDirectory.c_str()))
+        return indexFilename;
+    indexFilename.append(bindingDirectory)
+                 .append("/")
+                 .append(ONTABLE_TABLE_INDEX_FILE_NAME);
+    return indexFilename;
+}
+
+std::string ONTablePrivate::getColumnFilename(int columnID) const
+{
+    std::string filename;
+    if (bindingDirectory.empty() ||
+        !utils_isDirectory(bindingDirectory.c_str()))
+        return filename;
+
+    char ID[ONTABLE_TABLE_IO_BUFFER_MAXLEN];
+    sprintf(ID, "%d", columnID);
+    filename.append(bindingDirectory)
+            .append("/")
+            .append(ID)
+            .append(fileSuffix);
+    return filename;
+}
+
+
+bool ONTablePrivate::loadColumn(int columnID, int columnType,
+                                const std::string& columnName)
+{
+
+    ONTableColumn* newColumn;
+    switch (ONTable::ColumnType(columnType))
+    {
+        case ONTable::ColumnType::Integer:
+            newColumn = new ONTableIntColumn;
+            break;
+        case ONTable::ColumnType::Double:
+            newColumn = new ONTableDoubleColumn;
+            break;
+        case ONTable::ColumnType::String:
+            newColumn = new ONTableStringColumn;
+            break;
+        default:
+            return false;
+    }
+    if (!(newColumn->setBindingFile(getColumnFilename(columnID).c_str()) &&
+          newColumn->load()))
+        return false;
+
+    newColumn->ID = columnID;
+    newColumn->typeID = columnType;
+    columnList.push_back(newColumn);
+    columnIDList.push_back(newColumn->ID);
+    columnTypeIDList.push_back(newColumn->typeID);
+    columnNameList.push_back(columnName);
+
+    // Use the IDs of the first column as the record IDs
+    if (IDList.size() == 0)
+    {
+        if (newColumn->typeID != ONTable::ColumnType::Integer)
+        {
+            delete newColumn;
+            return false;
+        }
+        int* keyList = newColumn->keys();
+        for (int j=0; j<newColumn->length(); j++)
+            IDList.push_back(keyList[j]);
+        delete[] keyList;
+    }
+    return true;
+}
+
+bool ONTablePrivate::saveColumn(int columnIndex)
+{
+    // TODO: save bindingFilename for each columns before saving
+    ONTableColumn* column = columnList[columnIndex];
+    std::string oldFilename;
+    std::stringstream filename;
+    oldFilename = column->bindingFile() == nullptr ?
+                  "" :
+                  column->bindingFile();
+    filename.str("");
+    filename << bindingDirectory
+             << "/"
+             << column->ID
+             << fileSuffix;
+    column->setBindingFile(filename.str().c_str());
+    if (column->save())
+        return true;
+    else
+    {
+        column->setBindingFile(oldFilename.c_str());
+        return false;
+    }
+}
+
+ONTable::ColumnType
+ONTablePrivate::getColumnType(int columnID, const std::string& indexFilename)
+{
+    ONTable::ColumnType columnType = ONTable::ColumnType::None;
+    if (!utils_isFile(indexFilename.c_str()))
+        return columnType;
+
+    char buffer[ONTABLE_TABLE_IO_BUFFER_MAXLEN];
+    FILE* f = fopen(indexFilename.c_str(), "rb");
+
+    // Check for the index file header
+    fread(buffer, 1, strlen(ONTABLE_TABLE_INDEX_FILE_HEADER), f);
+    if (strncmp(buffer, ONTABLE_TABLE_INDEX_FILE_HEADER,
+                strlen(ONTABLE_TABLE_INDEX_FILE_HEADER)) != 0)
+    {
+        fclose(f);
+        return columnType;
+    }
+
+    // Ignore version check
+    fseek(f, strlen(ONTABLE_TABLE_INDEX_FILE_VERSION), SEEK_CUR);
+
+    char* pos, *pos2;
+    while (!feof(f))
+    {
+        if (fgets(buffer, '\n', f) != buffer)
+            break;
+
+        // Parse the column index and the column type ID from each line
+        pos = strstr(buffer, ",");
+        if (!pos)
+            continue;
+        if (strtold(buffer, &pos2) != columnID || buffer == pos2)
+            continue;
+
+        columnType =  ONTable::ColumnType(atoi(pos + 1));
+        break;
+    }
+    fclose(f);
+
+    return columnType;
 }

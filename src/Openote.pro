@@ -32,7 +32,8 @@ SOURCES += \
     OpenTable/ontableintcolumn.cpp \
     OpenTable/ontabledoublecolumn.cpp \
     OpenTable/ontablestringcolumn.cpp \
-    OpenTable/ontable.cpp
+    OpenTable/ontable.cpp \
+    OpenTable/utils/filesystem.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -43,7 +44,8 @@ HEADERS += \
     OpenTable/ontabledoublecolumn.h \
     OpenTable/ontablestringcolumn.h \
     OpenTable/ontable.h \
-    OpenTable/ontable_p.h
+    OpenTable/ontable_p.h \
+    OpenTable/utils/filesystem.h
 
 FORMS += \
     dialogabout.ui \

@@ -13,6 +13,9 @@ public:
     ONTableColumnPrivate(const ONTableColumnPrivate& src);
 
     char* bindingFile;
+    char* recordDelimiter;
+    char* fieldDelimiter;
+
     std::map<int, char*> data;
 };
 

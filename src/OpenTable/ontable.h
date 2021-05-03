@@ -22,25 +22,29 @@ public:
     ONTable();
     ~ONTable();
 
-    int ID();
+    int ID() const;
     void setID(int ID);
 
-    std::string name();
+    std::string name() const;
     void setName(const std::string& name);
 
-    int countRow();
-    int countColumn();
+    int countRow() const;
+    int countColumn() const;
 
-    bool existsRow(int ID);
-    bool existsColumn(int ID);
+    bool existsRow(int ID) const;
+    bool existsColumn(int ID) const;
 
-    std::list<int> IDs();
-    std::vector<std::string> columnNames();
+    std::list<int> IDs() const;
+    std::vector<std::string> columnNames() const;
 
     void clear();
 
     int newRow();
     int newColumn(const std::string& name, ColumnType columnType);
+
+    int readInt(int ID, int columnID) const;
+    double readDouble(int ID, int columnID) const;
+    std::string readString(int ID, int columnID) const;
 
     bool modify(int ID, int columnID, const int& value);
     bool modify(int ID, int columnID, const double& value);
@@ -48,6 +52,14 @@ public:
 
     void removeRow(int ID);
     void removeColumn(int columnID);
+
+    std::string bindingDirectory() const;
+    bool setBindingDirectory(const std::string& path);
+    std::string fileSuffix() const;
+    void setFileSuffix(const std::string& suffix);
+
+    bool load();
+    bool save();
 
 protected:
     ONTablePrivate* d_ptr;

@@ -3,6 +3,8 @@
 #include "ontablestringcolumn.h"
 #include "ontablecolumn_p.h"
 
+#define ONTABLE_COLUMN_STRING_BUFFER_LEN 2048
+
 
 ONTableStringColumn::ONTableStringColumn()
 {
@@ -61,4 +63,68 @@ void ONTableStringColumn::remove(int key)
         delete static_cast<char*>((*pos).second);
         d->data.erase(key);
     }
+}
+
+bool ONTableStringColumn::load()
+{
+    if (!d_ptr->bindingFile)
+        return false;
+
+    int key;
+    unsigned int valueLength;
+    char* data;
+    char* pos, *pos2;
+    char* buffer = new char[ONTABLE_COLUMN_STRING_BUFFER_LEN];
+    FILE* f = fopen(d_ptr->bindingFile, "rb");
+    while (true)
+    {
+        if (fgets(buffer, ONTABLE_COLUMN_STRING_BUFFER_LEN, f) != buffer)
+            break;
+
+        // Try to parse the record ID and the record value
+        pos = strstr(buffer, d_ptr->recordDelimiter);
+        if (!pos)
+            continue;
+        key = static_cast<int>(strtold(buffer, &pos2));
+        if (key < 0 || buffer == pos2)
+            continue;
+        pos = strstr(pos2, d_ptr->recordDelimiter);
+        if (pos + 1 == pos2)
+            continue;
+
+        valueLength = pos2 - pos;
+        data = new char[valueLength + 4];
+        memcpy(data, &valueLength, sizeof(int));
+        memcpy(data + 4, pos2 + 1, valueLength);
+        d_ptr->data.insert(std::make_pair(key, data));
+
+        if (feof(f))
+            break;
+    }
+    fclose(f);
+    return true;
+}
+
+bool ONTableStringColumn::save()
+{
+    if (!d_ptr->bindingFile)
+        return false;
+
+    FILE* f = fopen(d_ptr->bindingFile, "wb");
+    if (!f)
+        return false;
+
+    double value;
+    std::map<int, char*>::const_iterator i;
+    for (i=d_ptr->data.cbegin(); i!=d_ptr->data.cend(); i++)
+    {
+        memcpy(&value, i->second, sizeof(int));
+        fprintf(f, "%d%s%f%s",
+                i->first,
+                d->fieldDelimiter,
+                value,
+                d->recordDelimiter);
+    }
+    fclose(f);
+    return true;
 }

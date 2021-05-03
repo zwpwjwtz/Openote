@@ -17,6 +17,9 @@ public:
     virtual void set(int key, const std::string& value);
     virtual void remove(int key);
 
+    virtual bool load();
+    virtual bool save();
+
 private:
     ONTableColumnPrivate* d;
 };
