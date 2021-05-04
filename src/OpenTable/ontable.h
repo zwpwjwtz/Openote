@@ -32,6 +32,7 @@ public:
     bool existsColumn(int ID) const;
 
     std::list<int> IDs() const;
+    std::vector<int> columnIDs() const;
     std::vector<std::string> columnNames() const;
 
     void clear();

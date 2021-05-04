@@ -1,7 +1,6 @@
 #ifndef ONBOOK_H
 #define ONBOOK_H
 
-#include <string>
 #include "ontable.h"
 
 
@@ -15,13 +14,16 @@ public:
 
     int count() const;
     bool exists(int tableID) const;
+    std::vector<int> tableIDs() const;
 
     void clear();
 
     ONTable* table(int tableID) const;
     int addTable(const std::string& tableName);
-    bool setTableName(int tableID, const std::string& newName);
     void removeTable(int tableID);
+
+    std::string tableName(int tableID) const;
+    bool setTableName(int tableID, const std::string& newName);
 
     int columnReference(int sourceTableID, int sourceColumnID) const;
     bool setColumnReference(int sourceTableID,

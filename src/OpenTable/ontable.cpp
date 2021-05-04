@@ -69,6 +69,11 @@ std::list<int> ONTable::IDs() const
     return d_ptr->IDList;
 }
 
+std::vector<int> ONTable::columnIDs() const
+{
+    return d_ptr->columnIDList;
+}
+
 std::vector<std::string> ONTable::columnNames() const
 {
     return d_ptr->columnNameList;

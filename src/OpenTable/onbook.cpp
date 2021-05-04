@@ -39,6 +39,11 @@ bool ONBook::exists(int tableID) const
     return d_ptr->getTableIndexByID(tableID) >= 0;
 }
 
+std::vector<int> ONBook::tableIDs() const
+{
+    return d_ptr->tableIDList;
+}
+
 void ONBook::clear()
 {
     d_ptr->tableList.clear();
@@ -67,6 +72,11 @@ int ONBook::addTable(const std::string& tableName)
     d_ptr->tableNameList.push_back(tableName);
 
     return availableID;
+}
+
+std::string ONBook::tableName(int tableID) const
+{
+    return d_ptr->tableNameList[d_ptr->getTableIndexByID(tableID)];
 }
 
 bool ONBook::setTableName(int tableID, const std::string& newName)
