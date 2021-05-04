@@ -11,6 +11,7 @@ class ONTableStringColumn : public ONTableColumn
 {
 public:
     ONTableStringColumn();
+    ONTableStringColumn(const ONTableStringColumn& src);
     ~ONTableStringColumn();
 
     virtual std::string valueAsString(int key) const;

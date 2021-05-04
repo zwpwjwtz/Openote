@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "OpenTable/ontable.h"
+#include "OpenTable/onbook.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),

@@ -12,9 +12,8 @@ class ONTablePrivate
 {
 public:
     ONTablePrivate();
+    ONTablePrivate(const ONTablePrivate& src);
 
-    int ID;
-    std::string name;
     std::string bindingDirectory;
     std::string fileSuffix;
 
@@ -25,7 +24,7 @@ public:
 
     std::vector<ONTableColumn*> columnList;
 
-    size_t getColumnIndexByID(int columnID) const;
+    int getColumnIndexByID(int columnID) const;
     std::string getIndexFilename() const;
     std::string getColumnFilename(int columnID) const;
 

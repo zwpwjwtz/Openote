@@ -10,6 +10,7 @@ class ONTableIntColumn : public ONTableColumn
 {
 public:
     ONTableIntColumn();
+    ONTableIntColumn(const ONTableIntColumn& src);
     ~ONTableIntColumn();
 
     virtual int valueAsInt(int key) const;

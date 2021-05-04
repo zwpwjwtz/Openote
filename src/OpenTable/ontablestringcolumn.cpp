@@ -13,11 +13,32 @@ ONTableStringColumn::ONTableStringColumn()
     typeID = ONTABLE_COLUMN_TYPE_STRING;
 }
 
+ONTableStringColumn::ONTableStringColumn(const ONTableStringColumn& src) :
+    ONTableColumn (src)
+{
+    d = d_ptr;
+    d->data.clear();
+
+    // Do a deep copy for the data
+    char* newData;
+    int dataLength;
+    std::map<int, char*>::const_iterator i;
+    for (i=src.d->data.cbegin(); i!=src.d->data.cend(); i++)
+    {
+        memcpy(&dataLength, i->second, sizeof(int));
+        if (dataLength < 0)
+            continue;
+        newData = new char[dataLength + sizeof(int)];
+        memcpy(newData, i->second, dataLength + sizeof(int));
+        d->data.insert(std::make_pair(i->first, newData));
+    }
+}
+
 ONTableStringColumn::~ONTableStringColumn()
 {
     std::map<int, char*>::iterator i;
     for (i=d->data.begin(); i!=d->data.end(); i++)
-        delete static_cast<char*>((*i).second);
+        delete[] (*i).second;
 }
 
 std::string ONTableStringColumn::valueAsString(int key) const
@@ -71,31 +92,38 @@ bool ONTableStringColumn::load()
         return false;
 
     int key;
-    unsigned int valueLength;
+    int valueLength;
     char* data;
-    char* pos, *pos2;
+    char* pos, *pos2, *posE;
     char* buffer = new char[ONTABLE_COLUMN_STRING_BUFFER_LEN];
     FILE* f = fopen(d_ptr->bindingFile, "rb");
     while (true)
     {
+        // TODO: use d_ptr->recordDelimiter to define the read boundary
         if (fgets(buffer, ONTABLE_COLUMN_STRING_BUFFER_LEN, f) != buffer)
             break;
 
-        // Try to parse the record ID and the record value
-        pos = strstr(buffer, d_ptr->recordDelimiter);
+        // Try to parse the record ID
+        pos = strstr(buffer, d_ptr->fieldDelimiter);
         if (!pos)
             continue;
-        key = static_cast<int>(strtold(buffer, &pos2));
-        if (key < 0 || buffer == pos2)
-            continue;
-        pos = strstr(pos2, d_ptr->recordDelimiter);
-        if (pos + 1 == pos2)
+        key = static_cast<int>(strtol(buffer, &posE, 10));
+        if (key < 0 || buffer == posE)
             continue;
 
-        valueLength = pos2 - pos;
+        // Try to parse the record length
+        pos2 = posE + strlen(d->fieldDelimiter);
+        pos = strstr(pos2, d_ptr->fieldDelimiter);
+        if (!pos)
+            continue;
+        valueLength = static_cast<int>(strtol(pos2, &posE, 10));
+        if (valueLength < 0 || pos2 == posE || posE > pos)
+            continue;
+
+        pos2 = posE + strlen(d->fieldDelimiter);
         data = new char[valueLength + 4];
         memcpy(data, &valueLength, sizeof(int));
-        memcpy(data + 4, pos2 + 1, valueLength);
+        memcpy(data + 4, pos2, valueLength);
         d_ptr->data.insert(std::make_pair(key, data));
 
         if (feof(f))
@@ -114,16 +142,15 @@ bool ONTableStringColumn::save()
     if (!f)
         return false;
 
-    double value;
+    int valueLength;
     std::map<int, char*>::const_iterator i;
     for (i=d_ptr->data.cbegin(); i!=d_ptr->data.cend(); i++)
     {
-        memcpy(&value, i->second, sizeof(int));
-        fprintf(f, "%d%s%f%s",
-                i->first,
-                d->fieldDelimiter,
-                value,
-                d->recordDelimiter);
+        memcpy(&valueLength, i->second, sizeof(int));
+        fprintf(f, "%d%s", i->first, d->fieldDelimiter);
+        fprintf(f, "%d%s", valueLength, d->fieldDelimiter);
+        fwrite(i->second + sizeof(int), valueLength, 1, f);
+        fputs(d->recordDelimiter, f);
     }
     fclose(f);
     return true;

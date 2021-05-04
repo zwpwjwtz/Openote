@@ -10,6 +10,7 @@ class ONTableDoubleColumn : public ONTableColumn
 {
 public:
     ONTableDoubleColumn();
+    ONTableDoubleColumn(const ONTableDoubleColumn& src);
     ~ONTableDoubleColumn();
 
     virtual double valueAsDouble(int key) const;

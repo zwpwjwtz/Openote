@@ -20,13 +20,10 @@ public:
     };
 
     ONTable();
+    ONTable(const ONTable& src);
     ~ONTable();
 
-    int ID() const;
-    void setID(int ID);
-
-    std::string name() const;
-    void setName(const std::string& name);
+    int ID;
 
     int countRow() const;
     int countColumn() const;
@@ -42,6 +39,7 @@ public:
     int newRow();
     int newColumn(const std::string& name, ColumnType columnType);
 
+    ColumnType columnType(int columnID) const;
     int readInt(int ID, int columnID) const;
     double readDouble(int ID, int columnID) const;
     std::string readString(int ID, int columnID) const;

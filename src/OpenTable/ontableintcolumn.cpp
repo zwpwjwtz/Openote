@@ -8,8 +8,25 @@
 ONTableIntColumn::ONTableIntColumn()
 {
     d = d_ptr;
-    ID = 0;
     typeID = ONTABLE_COLUMN_TYPE_INT;
+}
+
+ONTableIntColumn::ONTableIntColumn(const ONTableIntColumn& src) :
+    ONTableColumn (src)
+{
+    d = d_ptr;
+    d->data.clear();
+
+    // Do a deep copy for the data
+    int* newData;
+    std::map<int, char*>::const_iterator i;
+    for (i=src.d->data.cbegin(); i!=src.d->data.cend(); i++)
+    {
+        newData = new int;
+        memcpy(newData, i->second, sizeof(int));
+        d->data.insert(std::make_pair(i->first,
+                                      reinterpret_cast<char*>(newData)));
+    }
 }
 
 ONTableIntColumn::~ONTableIntColumn()
@@ -75,7 +92,7 @@ bool ONTableIntColumn::load()
         pos = strstr(buffer, d_ptr->fieldDelimiter);
         if (!pos)
             continue;
-        key = static_cast<int>(strtold(buffer, &pos2));
+        key = static_cast<int>(strtol(buffer, &pos2, 10));
         if (key < 0 || buffer == pos2)
             continue;
         value = int(strtold(pos + 1, &pos2));
