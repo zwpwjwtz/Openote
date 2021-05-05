@@ -4,7 +4,7 @@
 #include <QMessageBox>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "dialogabout.h"
+#include "dialogs/dialogabout.h"
 #include "widgets/bookview.h"
 
 
@@ -17,6 +17,29 @@ MainWindow::MainWindow(QWidget *parent) :
     windowAbout = nullptr;
     bookWidget = new BookView(this);
     ui->centralWidget->layout()->addWidget(bookWidget);
+
+    connect(ui->actionColumnAdd, SIGNAL(triggered()),
+            bookWidget, SLOT(addColumn()));
+    connect(ui->actionColumnDelete, SIGNAL(triggered()),
+            bookWidget, SLOT(deleteColumn()));
+    connect(ui->actionColumnDuplicate, SIGNAL(triggered()),
+            bookWidget, SLOT(duplicateColumn()));
+    connect(ui->actionColumnRename, SIGNAL(triggered()),
+            bookWidget, SLOT(renameColumn()));
+    connect(ui->actionRowAdd, SIGNAL(triggered()),
+            bookWidget, SLOT(addRow()));
+    connect(ui->actionRowDelete, SIGNAL(triggered()),
+            bookWidget, SLOT(deleteRow()));
+    connect(ui->actionRowDuplicate, SIGNAL(triggered()),
+            bookWidget, SLOT(duplicateRow()));
+    connect(ui->actionTableAdd, SIGNAL(triggered()),
+            bookWidget, SLOT(addTable()));
+    connect(ui->actionTableDelete, SIGNAL(triggered()),
+            bookWidget, SLOT(deleteTable()));
+    connect(ui->actionTableDuplicate, SIGNAL(triggered()),
+            bookWidget, SLOT(duplicateTable()));
+    connect(ui->actionTableRename, SIGNAL(triggered()),
+            bookWidget, SLOT(renameTable()));
 
     move((QApplication::desktop()->width() - width()) / 2,
          (QApplication::desktop()->height() - height()) / 2);
@@ -54,11 +77,33 @@ bool MainWindow::sureToLeave()
                                   QMessageBox::Cancel);
 
     if (choice == QMessageBox::Yes)
-        return bookWidget->saveBook();
+        return saveBook();
     else if (choice == QMessageBox::No)
         return true;
     else
         return false;
+}
+
+bool MainWindow::saveBook(QString path)
+{
+    if (path.isEmpty())
+    {
+        path = bookWidget->currentPath();
+        if (path.isEmpty())
+        {
+            path = QFileDialog::getExistingDirectory(this,
+                                                     "Save as a directory",
+                                                     lastDirectory);
+            if (path.isEmpty())
+            {
+                QMessageBox::warning(this, "Book not saved",
+                                     "The selected path is not valid!\n"
+                                     "Please select a directory for saving.");
+                return false;
+            }
+        }
+    }
+    return bookWidget->saveBook(path);
 }
 
 void MainWindow::on_actionFileNew_triggered()
@@ -81,7 +126,7 @@ void MainWindow::on_actionFileOpen_triggered()
 
 void MainWindow::on_actionFileSave_triggered()
 {
-    bookWidget->saveBook();
+    saveBook();
 }
 
 void MainWindow::on_actionFileSaveAs_triggered()
@@ -89,7 +134,7 @@ void MainWindow::on_actionFileSaveAs_triggered()
     QString path = QFileDialog::getExistingDirectory(this, "Save as a directory",
                                                      lastDirectory);
     if (!path.isEmpty())
-        bookWidget->saveBook(path);
+        saveBook(path);
 }
 
 void MainWindow::on_actionFileExit_triggered()

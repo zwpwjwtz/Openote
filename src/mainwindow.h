@@ -30,6 +30,7 @@ private:
     QString lastDirectory;
 
     bool sureToLeave();
+    bool saveBook(QString path = "");
 
 private slots:
     void on_actionFileNew_triggered();

@@ -29,7 +29,6 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    dialogabout.cpp \
     OpenTable/ontablecolumn.cpp \
     OpenTable/ontableintcolumn.cpp \
     OpenTable/ontabledoublecolumn.cpp \
@@ -37,11 +36,12 @@ SOURCES += \
     OpenTable/ontable.cpp \
     OpenTable/utils/filesystem.cpp \
     OpenTable/onbook.cpp \
-    widgets/bookview.cpp
+    widgets/bookview.cpp \
+    dialogs/dialogabout.cpp \
+    dialogs/dialogcolumnadd.cpp
 
 HEADERS += \
         mainwindow.h \
-    dialogabout.h \
     OpenTable/ontablecolumn.h \
     OpenTable/ontablecolumn_p.h \
     OpenTable/ontableintcolumn.h \
@@ -52,11 +52,14 @@ HEADERS += \
     OpenTable/utils/filesystem.h \
     OpenTable/onbook.h \
     OpenTable/onbook_p.h \
-    widgets/bookview.h
+    widgets/bookview.h \
+    dialogs/dialogabout.h \
+    dialogs/dialogcolumnadd.h
 
 FORMS += \
-    dialogabout.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    dialogs/dialogabout.ui \
+    dialogs/dialogcolumnadd.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

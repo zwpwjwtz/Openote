@@ -9,6 +9,7 @@
 class QStandardItemModel;
 class QTableView;
 class QHeaderView;
+class DialogColumnAdd;
 
 class BookView : public QTabWidget
 {
@@ -20,18 +21,47 @@ public:
     bool loadBook(const QString& path);
     bool loadDefaultBook();
     bool saveBook(const QString& path = "");
+    QString currentPath() const;
 
     bool modified() const;
 
+public slots:
+    bool addColumn();
+    bool deleteColumn();
+    bool duplicateColumn();
+    bool renameColumn();
+
+    bool addRow();
+    bool deleteRow();
+    bool duplicateRow();
+
+    bool addTable();
+    bool deleteTable();
+    bool duplicateTable();
+    bool renameTable();
+
 private:
+    struct BookIndex
+    {
+        int table;
+        int column;
+        int row;
+        bool isValid()
+        { return table >= 0 && column >= 0 && row >= 0; }
+    };
+
     QList<QStandardItemModel*> modelTables;
+    DialogColumnAdd* dialogColumnAdd;
     ONBook book;
     bool isModified;
 
+    int getTableID(int tableIndex) const;
+    int getColumnID(int tableIndex, int columnIndex) const;
     int getTableIndex(int tableID) const;
-    int getTableViewIndex(int tableID) const;
-    int getColumnViewIndex(int tableID, int columnID) const;
-    bool setColumnHeader(const QString& text, int columnID);
+    BookIndex getCurrentIndex() const;
+
+    QString columnHeader(int tableIndex, int columnIndex) const;
+    bool setColumnHeader(const QString& text, int tableIndex, int columnIndex);
 };
 
 #endif // BOOKVIEW_H
