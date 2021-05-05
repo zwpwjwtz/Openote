@@ -2,11 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "OpenTable/onbook.h"
 
 
-class QStandardItemModel;
 class DialogAbout;
+class BookView;
 
 namespace Ui {
 class MainWindow;
@@ -27,18 +26,10 @@ protected:
 private:
     Ui::MainWindow *ui;
     DialogAbout* windowAbout;
-    QList<QStandardItemModel*> modelTables;
-
-    bool modified;
-    ONBook book;
+    BookView* bookWidget;
     QString lastDirectory;
 
-    void reset();
-
     bool sureToLeave();
-    bool loadBook(const QString& path);
-    bool loadDefaultBook();
-    bool saveBook(const QString& path = "");
 
 private slots:
     void on_actionFileNew_triggered();

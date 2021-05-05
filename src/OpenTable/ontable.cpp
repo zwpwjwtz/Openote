@@ -74,9 +74,16 @@ std::vector<int> ONTable::columnIDs() const
     return d_ptr->columnIDList;
 }
 
-std::vector<std::string> ONTable::columnNames() const
+std::string ONTable::columnName(int columnID) const
 {
-    return d_ptr->columnNameList;
+    return d_ptr->columnNameList[d_ptr->getColumnIndexByID(columnID)];
+}
+
+void ONTable::setColumnName(int columnID, const std::string& newName)
+{
+    int index = d_ptr->getColumnIndexByID(columnID);
+    if (index >= 0)
+        d_ptr->columnNameList[index] = newName;
 }
 
 void ONTable::clear()

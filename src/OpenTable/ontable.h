@@ -33,7 +33,9 @@ public:
 
     std::list<int> IDs() const;
     std::vector<int> columnIDs() const;
-    std::vector<std::string> columnNames() const;
+
+    std::string columnName(int columnID) const;
+    void setColumnName(int columnID, const std::string &newName);
 
     void clear();
 
