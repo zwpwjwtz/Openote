@@ -16,7 +16,8 @@ public:
         None = 0,
         Integer = 1,
         Double = 2,
-        String = 4
+        String = 4,
+        IntegerList = 9
     };
 
     ONTable();
@@ -46,10 +47,12 @@ public:
     int readInt(int ID, int columnID) const;
     double readDouble(int ID, int columnID) const;
     std::string readString(int ID, int columnID) const;
+    std::vector<int> readIntList(int ID, int columnID) const;
 
     bool modify(int ID, int columnID, const int& value);
     bool modify(int ID, int columnID, const double& value);
     bool modify(int ID, int columnID, const std::string& value);
+    bool modify(int ID, int columnID, const std::vector<int>& valueList);
 
     void removeRow(int ID);
     void removeColumn(int columnID);

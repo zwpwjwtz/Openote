@@ -38,7 +38,8 @@ SOURCES += \
     OpenTable/onbook.cpp \
     widgets/bookview.cpp \
     dialogs/dialogabout.cpp \
-    dialogs/dialogcolumnadd.cpp
+    dialogs/dialogcolumnadd.cpp \
+    OpenTable/ontableintlistcolumn.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -54,7 +55,8 @@ HEADERS += \
     OpenTable/onbook_p.h \
     widgets/bookview.h \
     dialogs/dialogabout.h \
-    dialogs/dialogcolumnadd.h
+    dialogs/dialogcolumnadd.h \
+    OpenTable/ontableintlistcolumn.h
 
 FORMS += \
     mainwindow.ui \

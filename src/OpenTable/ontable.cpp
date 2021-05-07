@@ -5,6 +5,7 @@
 #include "ontableintcolumn.h"
 #include "ontabledoublecolumn.h"
 #include "ontablestringcolumn.h"
+#include "ontableintlistcolumn.h"
 #include "utils/filesystem.h"
 
 #define ONTABLE_TABLE_INDEX_FILE_NAME      "ontable-index"
@@ -132,6 +133,9 @@ int ONTable::newColumn(const std::string& name, ColumnType columnType)
         case String:
             emptyColumn = new ONTableStringColumn;
             break;
+        case IntegerList:
+            emptyColumn = new ONTableIntListColumn;
+            break;
         default:
             return 0;
     }
@@ -187,6 +191,24 @@ std::string ONTable::readString(int ID, int columnID) const
                 (d_ptr->columnList[columnIndex])->valueAsString(ID);
 }
 
+std::vector<int> ONTable::readIntList(int ID, int columnID) const
+{
+    int columnIndex = d_ptr->getColumnIndexByID(columnID);
+#ifdef ONTABLE_COLUMN_TYPE_CHECK
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::IntegerList)
+        return false;
+#endif
+    int valueCount;
+    int* values = dynamic_cast<ONTableIntListColumn*>
+            (d_ptr->columnList[columnIndex])->valueAsIntList(ID, valueCount);
+
+    std::vector<int> valueList;
+    if (valueCount > 0)
+        valueList = std::vector<int>(values, values + valueCount);
+    delete[] values;
+    return valueList;
+}
+
 bool ONTable::modify(int ID, int columnID, const int& value)
 {
     int columnIndex = d_ptr->getColumnIndexByID(columnID);
@@ -220,6 +242,20 @@ bool ONTable::modify(int ID, int columnID, const std::string& value)
 #endif
     dynamic_cast<ONTableStringColumn*>
             (d_ptr->columnList[columnIndex])->set(ID, value);
+    return true;
+}
+
+bool ONTable::modify(int ID, int columnID, const std::vector<int>& valueList)
+{
+    int columnIndex = d_ptr->getColumnIndexByID(columnID);
+#ifdef ONTABLE_COLUMN_TYPE_CHECK
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::IntegerList)
+        return false;
+#endif
+    dynamic_cast<ONTableIntListColumn*>
+            (d_ptr->columnList[columnIndex])->set(ID,
+                                                  valueList.data(),
+                                                  valueList.size());
     return true;
 }
 
@@ -386,6 +422,10 @@ ONTablePrivate::ONTablePrivate(const ONTablePrivate& src)
                     newColumn = new ONTableStringColumn(
                                     *(ONTableStringColumn*)src.columnList[i]);
                     break;
+                case ONTable::ColumnType::IntegerList:
+                    newColumn = new ONTableIntListColumn(
+                                    *(ONTableIntListColumn*)src.columnList[i]);
+                    break;
                 default:
                     newColumn = nullptr;
             }
@@ -453,6 +493,9 @@ bool ONTablePrivate::loadColumn(int columnID, int columnType,
             break;
         case ONTable::ColumnType::String:
             newColumn = new ONTableStringColumn;
+            break;
+        case ONTable::ColumnType::IntegerList:
+            newColumn = new ONTableIntListColumn;
             break;
         default:
             return false;
