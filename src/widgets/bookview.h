@@ -3,13 +3,13 @@
 
 #include <QTabWidget>
 #include <QMap>
-#include "OpenTable/onbook.h"
+#include "models/bookmodel.h"
 
 
-class QStandardItemModel;
 class QTableView;
 class QHeaderView;
 class DialogColumnAdd;
+class BookModel;
 
 class BookView : public QTabWidget
 {
@@ -50,13 +50,11 @@ private:
         { return table >= 0 && column >= 0 && row >= 0; }
     };
 
-    QList<QStandardItemModel*> modelTables;
+    BookModel book;
     DialogColumnAdd* dialogColumnAdd;
-    ONBook book;
     bool isModified;
 
     int getTableID(int tableIndex) const;
-    int getColumnID(int tableIndex, int columnIndex) const;
     int getTableIndex(int tableID) const;
     BookIndex getCurrentIndex() const;
 

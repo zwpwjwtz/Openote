@@ -1,14 +1,12 @@
-#include <QStandardItemModel>
 #include <QTableView>
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QInputDialog>
 #include "bookview.h"
+#include "models/tablemodel.h"
 #include <dialogs/dialogcolumnadd.h>
 
 #define OPENOTE_BOOKVIEW_PROP_TABLE_ID    "table-id"
-#define OPENOTE_BOOKVIEW_ROLE_COLUMN_ID   Qt::UserRole + 2
-#define OPENOTE_BOOKVIEW_ROLE_COLUMN_TYPE Qt::UserRole + 3
 
 
 BookView::BookView(QWidget *parent) : QTabWidget(parent)
@@ -24,7 +22,6 @@ BookView::BookView(QWidget *parent) : QTabWidget(parent)
 void BookView::clear()
 {
     QTabWidget::clear();
-    modelTables.clear();
     book.clear();
     isModified = false;
 }
@@ -33,95 +30,18 @@ bool BookView::loadBook(const QString& path)
 {
     clear();
 
-    book.setBindingDirectory(path.toStdString());
+    book.setPath(path);
     if (!book.load())
         return false;
 
-    ONTable* table;
-    std::vector<int> tableIDs = book.tableIDs();
-    std::vector<int> columnIDs;
-    std::list<int> rowIDs;
-    QList<int> tableIDList, columnIDList, rowIDList;
-    QStringList columnNameList;
-    ONTable::ColumnType columnType;
-    QStandardItemModel* model;
-    QStandardItem* newItem;
-    QList<QStandardItem*> itemList;
+    auto tableIDs = book.tableIDs();
     for (auto i=tableIDs.cbegin(); i!=tableIDs.cend(); i++)
     {
-        if (tableIDList.indexOf(*i) >= 0)
-        {
-            // Table with duplicated ID; skip it
-            continue;
-        }
-
-        // Load data of each book table into a model
-        table = book.table(*i);
-        rowIDs = table->IDs();
-        columnIDs = table->columnIDs();
-        columnIDList.clear();
-        columnNameList.clear();
-        model = new QStandardItemModel(this);
-        model->setColumnCount(0);
-        for (auto j=columnIDs.cbegin(); j!=columnIDs.cend(); j++)
-        {
-            if (columnIDList.indexOf(*j) >= 0)
-            {
-                // Column with duplicated ID; skip it
-                continue;
-            }
-
-            columnNameList.push_back(
-                            QString::fromStdString(table->columnName(*j)));
-            columnType = table->columnType(*j);
-            rowIDList.clear();
-            itemList.clear();
-            for (auto k=rowIDs.cbegin(); k!=rowIDs.cend(); k++)
-            {
-                if (rowIDList.indexOf(*k) >= 0)
-                {
-                    // Row with duplicated ID; skip it
-                    continue;
-                }
-
-                switch (columnType)
-                {
-                    case ONTable::ColumnType::Integer:
-                        newItem = new QStandardItem(
-                                    QString::number(table->readInt(*k, *j)));
-                        break;
-                    case ONTable::ColumnType::Double:
-                        newItem = new QStandardItem(
-                                    QString::number(table->readDouble(*k, *j)));
-                        break;
-                    case ONTable::ColumnType::String:
-                        newItem = new QStandardItem(QString::fromStdString(
-                                                    table->readString(*k, *j)));
-                        break;
-                    default:
-                        newItem = nullptr;
-                }
-                if (newItem == nullptr)
-                    continue;
-                itemList.push_back(newItem);
-                rowIDList.push_back(*k);
-            }
-            model->appendColumn(itemList);
-            model->setHeaderData(*j, Qt::Horizontal, *j,
-                                 OPENOTE_BOOKVIEW_ROLE_COLUMN_ID);
-            model->setHeaderData(*j, Qt::Horizontal, int(columnType),
-                                 OPENOTE_BOOKVIEW_ROLE_COLUMN_TYPE);
-            columnIDList.push_back(*j);
-        }
-        model->setHorizontalHeaderLabels(columnNameList);
-        modelTables.push_back(model);
-        tableIDList.push_back(*i);
-
         // Bind the model with a view
         QTableView* viewTable = new QTableView(this);
-        viewTable->setModel(model);
+        viewTable->setModel(book.table(*i));
         viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, *i);
-        addTab(viewTable, QString::fromStdString(book.tableName(*i)));
+        addTab(viewTable, book.tableName(*i));
     }
 
     return true;
@@ -133,22 +53,22 @@ bool BookView::loadDefaultBook()
 
     // Add an empty table
     QString newTableName("Table1");
-    int newTableID = book.addTable(newTableName.toStdString());
-    QStandardItemModel* model = new QStandardItemModel(this);
-    model->setColumnCount(1);
-    model->setRowCount(1);
-    model->setHorizontalHeaderItem(0, new QStandardItem("New Column"));
-    modelTables.push_back(model);
+    TableModel* newTable = book.addTable(newTableName);
+    if (newTable == nullptr)
+        return false;
+
+    newTable->newColumn("New Column", TableModel::ColumnType::String);
+    newTable->newRow();
     QTableView* viewTable = new QTableView(this);
-    viewTable->setModel(model);
-    viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTableID);
+    viewTable->setModel(newTable);
+    viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
     addTab(viewTable, newTableName);
     return true;
 }
 
 bool BookView::saveBook(const QString& path)
 {
-    book.setBindingDirectory(path.toStdString());
+    book.setPath(path);
     if (book.save())
     {
         isModified = false;
@@ -160,7 +80,7 @@ bool BookView::saveBook(const QString& path)
 
 QString BookView::currentPath() const
 {
-    return QString::fromStdString(book.bindingDirectory());
+    return book.path();
 }
 
 bool BookView::modified() const
@@ -182,15 +102,29 @@ bool BookView::addColumn()
         return false;
     if (dialogColumnAdd->referring)
     {
-
+        // TODO: deal with table reference
     }
     else
     {
-        // TODO: set column type for the new column
-        QStandardItemModel* table = modelTables[index.table];
-        table->setColumnCount(table->columnCount() + 1);
-        table->setHeaderData(table->columnCount() - 1, Qt::Horizontal,
-                             dialogColumnAdd->newName);
+        int tableID = getTableID(index.table);
+        TableModel* table = book.table(tableID);
+        auto newName = dialogColumnAdd->newName.toStdString();
+        if (dialogColumnAdd->referring)
+            ;
+        else
+        switch (dialogColumnAdd->typeIndex)
+        {
+            case 0:  // Integer
+                table->newColumn(newName, TableModel::ColumnType::Integer);
+                break;
+            case 1:  // Double
+                table->newColumn(newName, TableModel::ColumnType::Integer);
+                break;
+            case 2:  // String
+                table->newColumn(newName, TableModel::ColumnType::Integer);
+                break;
+            default:;
+        }
     }
 
     isModified = true;
@@ -202,13 +136,10 @@ bool BookView::deleteColumn()
     BookIndex index = getCurrentIndex();
     if (!index.isValid())
         return false;
-    if (modelTables[index.table]->removeColumn(index.column))
-    {
-        isModified = true;
+
+    book.table(getTableID(index.table))->removeColumns(index.column,1 );
+    isModified = true;
         return true;
-    }
-    else
-        return false;
 }
 
 bool BookView::duplicateColumn()
@@ -225,23 +156,14 @@ bool BookView::duplicateColumn()
     if (newName.isEmpty())
         return false;
 
-    QStandardItemModel* table = modelTables[index.table];
-    QList<QStandardItem*> columnItems;
-    QStandardItem* oldItem, *newItem;
-    for (int i=0; i<table->rowCount(); i++)
+    TableModel* table = book.table(index.table);
+    if (table->duplicateColumn(index.column))
     {
-        oldItem = table->item(i, index.column);
-        if (oldItem == nullptr)
-            newItem = new QStandardItem();
-        else
-            newItem = new QStandardItem(oldItem->text());
-        columnItems.push_back(newItem);
+        isModified = true;
+        return true;
     }
-    table->appendColumn(columnItems);
-    setColumnHeader(newName, index.table, table->columnCount() - 1);
-
-    isModified = true;
-    return true;
+    else
+        return false;
 }
 
 bool BookView::renameColumn()
@@ -271,8 +193,9 @@ bool BookView::addRow()
     BookIndex index = getCurrentIndex();
     if (index.table < 0)
         return false;
-    QStandardItemModel* table = modelTables[index.table];
-    table->setRowCount(table->rowCount() + 1);
+
+    TableModel* table = book.table(getTableID(index.table));
+    table->newRow();
 
     isModified = true;
     return true;
@@ -283,7 +206,9 @@ bool BookView::deleteRow()
     BookIndex index = getCurrentIndex();
     if (!index.isValid())
         return false;
-    modelTables[index.table]->removeRow(index.row);
+
+    TableModel* table = book.table(getTableID(index.table));
+    table->removeRows(index.row, 1);
 
     isModified = true;
     return true;
@@ -294,22 +219,15 @@ bool BookView::duplicateRow()
     BookIndex index = getCurrentIndex();
     if (!index.isValid())
         return false;
-    QStandardItemModel* table = modelTables[index.table];
-    QList<QStandardItem*> rowItems;
-    QStandardItem* oldItem, *newItem;
-    for (int i=0; i<table->columnCount(); i++)
-    {
-        oldItem = table->item(index.row, i);
-        if (oldItem == nullptr)
-            newItem = new QStandardItem();
-        else
-            newItem = new QStandardItem(oldItem->text());
-        rowItems.push_back(newItem);
-    }
-    table->appendRow(rowItems);
 
-    isModified = true;
-    return true;
+    TableModel* table = book.table(getTableID(index.table));
+    if (table->duplicateRow(index.row))
+    {
+        isModified = true;
+        return true;
+    }
+    else
+        return false;
 }
 
 bool BookView::addTable()
@@ -321,12 +239,10 @@ bool BookView::addTable()
     if (newName.isEmpty())
         return false;
 
-    int newTableID = book.addTable(newName.toStdString());
-    QStandardItemModel* newModel = new QStandardItemModel(this);
-    modelTables.push_back(newModel);
+    TableModel* newTable = book.addTable(newName);
     QTableView* viewTable = new QTableView(this);
-    viewTable->setModel(newModel);
-    viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTableID);
+    viewTable->setModel(newTable);
+    viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
     addTab(viewTable, newName);
 
     isModified = true;
@@ -339,19 +255,22 @@ bool BookView::deleteTable()
     BookIndex index = getCurrentIndex();
     if (index.table < 0)
         return false;
+
+    int tableID = getTableID(index.table);
     if (QMessageBox::warning(this, "Delete a table",
                              QString("Are you sure to delete table %1 ?")
-                                    .arg(QString::fromStdString(
-                                             book.tableName(index.table))))
+                                    .arg(book.tableName(tableID)))
             != QMessageBox::Yes)
         return false;
 
-    removeTab(currentIndex());
-    modelTables.removeAt(index.table);
-    book.removeTable(getTableID(index.table));
-
-    isModified = true;
-    return true;
+    if (book.removeTable(getTableID(index.table)))
+    {
+        removeTab(currentIndex());
+        isModified = true;
+        return true;
+    }
+    else
+        return false;
 }
 
 bool BookView::duplicateTable()
@@ -360,8 +279,8 @@ bool BookView::duplicateTable()
     if (index.table < 0)
         return false;
 
-    QString oldName = QString::fromStdString(
-                                    book.tableName(getTableID(index.table)));
+    int oldTableID = getTableID(index.table);
+    QString oldName = book.tableName(oldTableID);
     QString newName = QInputDialog::getText(this, "Duplicate a table",
                                             "New table name:",
                                             QLineEdit::Normal,
@@ -370,13 +289,13 @@ bool BookView::duplicateTable()
         return false;
 
     // TODO: duplicate the table content
-    int newTableID = book.addTable(newName.toStdString());
-    QStandardItemModel* newModel =
-                             new QStandardItemModel(modelTables[index.table]);
-    modelTables.push_back(newModel);
+    TableModel* newTable = book.duplicateTable(oldTableID, newName);
+    if (newTable == nullptr)
+        return false;
+
     QTableView* viewTable = new QTableView(this);
-    viewTable->setModel(newModel);
-    viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTableID);
+    viewTable->setModel(newTable);
+    viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
     addTab(viewTable, newName);
 
     isModified = true;
@@ -389,7 +308,8 @@ bool BookView::renameTable()
     if (index.table < 0)
         return false;
 
-    QString oldName = QString::fromStdString(book.tableName(index.table));
+    int tableID = getTableID(index.table);
+    QString oldName = book.tableName(tableID);
     QString newName = QInputDialog::getText(this, "Rename a table",
                                             "New name for the column:",
                                             QLineEdit::Normal,
@@ -398,7 +318,7 @@ bool BookView::renameTable()
         return false;
     if (newName == oldName)
         return true;
-    if (book.setTableName(index.table, newName.toStdString()))
+    if (book.setTableName(tableID, newName))
     {
         setTabText(currentIndex(), newName);
         isModified = true;
@@ -410,14 +330,6 @@ bool BookView::renameTable()
 int BookView::getTableID(int tableIndex) const
 {
     return widget(tableIndex)->property(OPENOTE_BOOKVIEW_PROP_TABLE_ID).toInt();
-}
-
-int BookView::getColumnID(int tableIndex, int columnIndex) const
-{
-    return modelTables[tableIndex]->headerData(columnIndex,
-                                               Qt::Horizontal,
-                                               OPENOTE_BOOKVIEW_ROLE_COLUMN_ID)
-                                 .toInt();
 }
 
 int BookView::getTableIndex(int tableID) const
@@ -451,13 +363,13 @@ BookView::BookIndex BookView::getCurrentIndex() const
 
 QString BookView::columnHeader(int tableIndex, int columnIndex) const
 {
-    return modelTables[tableIndex]->headerData(columnIndex,
+    return book.table(tableIndex)->headerData(columnIndex,
                                                Qt::Horizontal).toString();
 }
 
 bool BookView::setColumnHeader(const QString &text,
                                int tableIndex, int columnIndex)
 {
-    modelTables[tableIndex]->setHeaderData(columnIndex, Qt::Horizontal, text);
+    book.table(tableIndex)->setHeaderData(columnIndex, Qt::Horizontal, text);
     return true;
 }

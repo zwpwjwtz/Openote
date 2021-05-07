@@ -24,13 +24,13 @@ public:
 
     std::vector<ONTableColumn*> columnList;
 
-    int getColumnIndexByID(int columnID) const;
-    std::string getIndexFilename() const;
-    std::string getColumnFilename(int columnID) const;
+    virtual int getColumnIndexByID(int columnID) const;
+    virtual std::string getIndexFilename() const;
+    virtual std::string getColumnFilename(int columnID) const;
 
-    bool loadColumn(int columnID, int columnType,
-                    const std::string& columnName);
-    bool saveColumn(int columnIndex);
+    virtual bool loadColumn(int columnID, int columnType,
+                            const std::string& columnName);
+    virtual bool saveColumn(int columnIndex);
 
     static ONTable::ColumnType getColumnType(int columnID,
                                              const std::string& indexFilename);

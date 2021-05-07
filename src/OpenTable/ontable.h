@@ -22,48 +22,49 @@ public:
 
     ONTable();
     ONTable(const ONTable& src);
-    ~ONTable();
+    virtual ~ONTable();
 
     int ID;
 
-    int countRow() const;
-    int countColumn() const;
+    virtual int countRow() const;
+    virtual int countColumn() const;
 
-    bool existsRow(int ID) const;
-    bool existsColumn(int ID) const;
+    virtual bool existsRow(int ID) const;
+    virtual bool existsColumn(int ID) const;
 
-    std::list<int> IDs() const;
-    std::vector<int> columnIDs() const;
+    virtual std::list<int> IDs() const;
+    virtual std::vector<int> columnIDs() const;
 
-    std::string columnName(int columnID) const;
-    void setColumnName(int columnID, const std::string &newName);
+    virtual std::string columnName(int columnID) const;
+    virtual void setColumnName(int columnID, const std::string &newName);
 
-    void clear();
+    virtual void clear();
 
-    int newRow();
-    int newColumn(const std::string& name, ColumnType columnType);
+    virtual int newRow();
+    virtual int newColumn(const std::string& name, ColumnType columnType);
 
-    ColumnType columnType(int columnID) const;
-    int readInt(int ID, int columnID) const;
-    double readDouble(int ID, int columnID) const;
-    std::string readString(int ID, int columnID) const;
-    std::vector<int> readIntList(int ID, int columnID) const;
+    virtual ColumnType columnType(int columnID) const;
+    virtual int readInt(int ID, int columnID) const;
+    virtual double readDouble(int ID, int columnID) const;
+    virtual std::string readString(int ID, int columnID) const;
+    virtual std::vector<int> readIntList(int ID, int columnID) const;
 
-    bool modify(int ID, int columnID, const int& value);
-    bool modify(int ID, int columnID, const double& value);
-    bool modify(int ID, int columnID, const std::string& value);
-    bool modify(int ID, int columnID, const std::vector<int>& valueList);
+    virtual bool modify(int ID, int columnID, const int& value);
+    virtual bool modify(int ID, int columnID, const double& value);
+    virtual bool modify(int ID, int columnID, const std::string& value);
+    virtual bool modify(int ID, int columnID,
+                        const std::vector<int>& valueList);
 
-    void removeRow(int ID);
-    void removeColumn(int columnID);
+    virtual void removeRow(int ID);
+    virtual void removeColumn(int columnID);
 
-    std::string bindingDirectory() const;
-    bool setBindingDirectory(const std::string& path);
-    std::string fileSuffix() const;
-    void setFileSuffix(const std::string& suffix);
+    virtual std::string bindingDirectory() const;
+    virtual bool setBindingDirectory(const std::string& path);
+    virtual std::string fileSuffix() const;
+    virtual void setFileSuffix(const std::string& suffix);
 
-    bool load();
-    bool save();
+    virtual bool load();
+    virtual bool save();
 
 protected:
     ONTablePrivate* d_ptr;
