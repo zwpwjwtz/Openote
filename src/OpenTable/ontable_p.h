@@ -13,6 +13,7 @@ class ONTablePrivate
 public:
     ONTablePrivate();
     ONTablePrivate(const ONTablePrivate& src);
+    virtual ~ONTablePrivate();
 
     std::string bindingDirectory;
     std::string fileSuffix;

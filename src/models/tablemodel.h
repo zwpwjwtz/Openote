@@ -13,6 +13,9 @@ class TableModel : public QAbstractItemModel, public ONTable
 
 public:
     explicit TableModel(QObject *parent = nullptr);
+    TableModel(const TableModel &src);
+
+    static TableModel* clone(const TableModel &src);
 
     // Header:
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -43,6 +46,8 @@ public:
                     const QModelIndex& parent = QModelIndex()) override;
     bool insertColumns(int column, int count,
                        const QModelIndex& parent = QModelIndex()) override;
+    int newRow() override;
+    int newColumn(const std::string& name, ColumnType columnType) override;
 
     // Dupliate data:
     bool duplicateRow(int row);
@@ -54,7 +59,7 @@ public:
     bool removeColumns(int column, int count,
                        const QModelIndex& parent = QModelIndex()) override;
 
-private:
+protected:
     TableModelPrivate* d;
 };
 

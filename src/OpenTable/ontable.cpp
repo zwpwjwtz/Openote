@@ -36,8 +36,6 @@ ONTable::ONTable(ONTablePrivate* data)
 
 ONTable::~ONTable()
 {
-    for (size_t i=0; i<d_ptr->columnList.size(); i++)
-        delete d_ptr->columnList[i];
     delete d_ptr;
 }
 
@@ -395,6 +393,12 @@ bool ONTable::save()
 
 ONTablePrivate::ONTablePrivate()
 {
+}
+
+ONTablePrivate::~ONTablePrivate()
+{
+    for (size_t i=0; i<columnList.size(); i++)
+        delete columnList[i];
 }
 
 ONTablePrivate::ONTablePrivate(const ONTablePrivate& src)

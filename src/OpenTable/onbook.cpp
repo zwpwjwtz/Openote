@@ -55,7 +55,7 @@ ONTable* ONBook::table(int tableID) const
 {
     int index = d_ptr->getTableIndexByID(tableID);
     if (index >= 0)
-        return &d_ptr->tableList[index];
+        return d_ptr->tableList[index];
     else
         return nullptr;
 }
@@ -64,10 +64,10 @@ int ONBook::addTable(const std::string& tableName)
 {
     // Assuming increasing ID of tables in the list
     int availableID = d_ptr->tableList.size() > 0 ?
-                      d_ptr->tableList.back().ID + 1 :
+                      d_ptr->tableList.back()->ID + 1 :
                       1;
-    d_ptr->tableList.push_back(ONTable());
-    d_ptr->tableList.back().ID = availableID;
+    d_ptr->tableList.push_back(new ONTable);
+    d_ptr->tableList.back()->ID = availableID;
     d_ptr->tableIDList.push_back(availableID);
     d_ptr->tableNameList.push_back(tableName);
 
@@ -119,9 +119,9 @@ bool ONBook::setColumnReference(int sourceTableID,
     int sourceIndex = d_ptr->getTableIndexByID(sourceTableID);
     int targetIndex = d_ptr->getTableIndexByID(targetTableID);
     if (sourceIndex < 0 || targetIndex < 0 ||
-        !d_ptr->tableList[sourceIndex].existsColumn(sourceColumnID))
+        !d_ptr->tableList[sourceIndex]->existsColumn(sourceColumnID))
         return false;
-    if (d_ptr->tableList[sourceIndex].columnType(sourceColumnID) !=
+    if (d_ptr->tableList[sourceIndex]->columnType(sourceColumnID) !=
         ONTable::ColumnType::Integer)
         return false;
 
@@ -165,7 +165,7 @@ bool ONBook::setBindingDirectory(const std::string& path)
         subdir << path << "/" << d_ptr->tableIDList[i];
         if (!utils_newDirectory(subdir.str().c_str()))
             return false;
-        d_ptr->tableList[i].setBindingDirectory(subdir.str());
+        d_ptr->tableList[i]->setBindingDirectory(subdir.str());
     }
     return true;
 }
@@ -242,7 +242,7 @@ bool ONBook::save()
     size_t i;
     for (i=0; i<d_ptr->tableList.size(); i++)
     {
-        if (!d_ptr->tableList[i].save())
+        if (!d_ptr->tableList[i]->save())
             return false;
     }
 
@@ -278,6 +278,12 @@ bool ONBook::save()
 
     fclose(f);
     return true;
+}
+
+ONBookPrivate::~ONBookPrivate()
+{
+    for (size_t i=0; i<tableList.size(); i++)
+        delete tableList[i];
 }
 
 int ONBookPrivate::getTableIndexByID(int tableID) const
@@ -320,13 +326,13 @@ std::string ONBookPrivate::getTableDirectory(int tableID) const
 
 bool ONBookPrivate::loadTable(int tableID, const std::string& tableName)
 {
-    tableList.push_back(ONTable());
-    ONTable& table = tableList.back();
-    if (!(table.setBindingDirectory(getTableDirectory(tableID)) &&
-          table.load()))
+    tableList.push_back(new ONTable);
+    ONTable* table = tableList.back();
+    if (!(table->setBindingDirectory(getTableDirectory(tableID)) &&
+          table->load()))
         return false;
 
-    table.ID = tableID;
+    table->ID = tableID;
     tableIDList.push_back(tableID);
     tableNameList.push_back(tableName);
 
@@ -336,20 +342,20 @@ bool ONBookPrivate::loadTable(int tableID, const std::string& tableName)
 bool ONBookPrivate::saveTable(int tableIndex)
 {
     // TODO: save bindingFilename for each columns before saving
-    ONTable& table = tableList[tableIndex];
+    ONTable* table = tableList[tableIndex];
     std::string oldDirectory;
     std::stringstream directory;
-    oldDirectory = table.bindingDirectory() == "" ?
+    oldDirectory = table->bindingDirectory() == "" ?
                    "" :
-                   table.bindingDirectory();
+                   table->bindingDirectory();
     directory.str("");
-    directory << bindingDirectory << "/" << table.ID;
-    table.setBindingDirectory(directory.str());
-    if (table.save())
+    directory << bindingDirectory << "/" << table->ID;
+    table->setBindingDirectory(directory.str());
+    if (table->save())
         return true;
     else
     {
-        table.setBindingDirectory(oldDirectory);
+        table->setBindingDirectory(oldDirectory);
         return false;
     }
 }

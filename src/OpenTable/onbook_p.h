@@ -12,7 +12,7 @@ class ONBook;
 class ONBookPrivate
 {
 public:
-    std::vector<ONTable> tableList;
+    std::vector<ONTable*> tableList;
     std::vector<int> tableIDList;
     std::vector<std::string> tableNameList;
 
@@ -20,14 +20,16 @@ public:
 
     std::string bindingDirectory;
 
-    int getTableIndexByID(int tableID) const;
-    std::string getIndexFilename() const;
-    std::string getTableDirectory(int tableID) const;
+    virtual ~ONBookPrivate();
 
-    bool loadTable(int tableID, const std::string& tableName);
-    bool saveTable(int tableIndex);
-    bool addColumnReferences(int targetTableID,
-                             const std::string& referenceMapString);
+    virtual int getTableIndexByID(int tableID) const;
+    virtual std::string getIndexFilename() const;
+    virtual std::string getTableDirectory(int tableID) const;
+
+    virtual bool loadTable(int tableID, const std::string& tableName);
+    virtual bool saveTable(int tableIndex);
+    virtual bool addColumnReferences(int targetTableID,
+                                     const std::string& referenceMapString);
 };
 
 #endif // ONBOOK_P_H

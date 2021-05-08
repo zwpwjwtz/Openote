@@ -1,18 +1,22 @@
 #include <QList>
+#include <sstream>
 #include "bookmodel.h"
 #include "bookmodel_p.h"
 #include "tablemodel.h"
 #include "OpenTable/onbook_p.h"
 
 
-BookModel::BookModel(QObject *parent) : QObject(parent)
+BookModel::BookModel(QObject *parent) :
+    QObject(parent),
+    ONBook (new BookModelPrivate)
 {
-    d = new BookModelPrivate;
+    d = dynamic_cast<BookModelPrivate*>(ONBook::d_ptr);
 }
 
 void BookModel::clear()
 {
     ONBook::clear();
+    d->tableList.clear();
 }
 
 QList<int> BookModel::tableIDs() const
@@ -39,33 +43,57 @@ TableModel* BookModel::table(int tableID) const
 
 TableModel* BookModel::addTable(const QString& tableName)
 {
-    TableModel* newTable = new TableModel();
-    auto tableList = ONBook::d_ptr->tableList;
-    tableList.push_back(*dynamic_cast<ONTable*>(newTable));
-
     // Assuming increasing ID of tables in the list
-    int availableID = tableList.size() > 0 ? tableList.back().ID + 1 : 1;
+    int availableID = d->tableList.size() > 0 ?
+                      d->tableList.back()->ID + 1 : 1;
+
+    TableModel* newTable = new TableModel();
     newTable->ID = availableID;
-    ONBook::d_ptr->tableIDList.push_back(availableID);
-    ONBook::d_ptr->tableNameList.push_back(tableName.toStdString());
+    d->tableList.push_back(newTable);
+    d->tableIDList.push_back(availableID);
+    d->tableNameList.push_back(tableName.toStdString());
+
+    // Update the data of parent class
+    ONBook::d_ptr->tableList.push_back(newTable);
+
     return newTable;
 }
 
 TableModel* BookModel::duplicateTable(int tableID, const QString& newName)
 {
-    ONTable* table = ONBook::table(tableID);
+    const TableModel* table = this->table(tableID);
     if (table == nullptr)
         return nullptr;
-    TableModel* newTable = addTable(newName);
-    if (newName == nullptr)
-        return nullptr;
-    dynamic_cast<ONTable&>(*newTable) = *table;
+
+    // Assuming increasing ID of tables in the list
+    int availableID = d->tableList.size() > 0 ?
+                      d->tableList.back()->ID + 1 : 1;
+
+    TableModel* newTable = new TableModel(*table);
+    newTable->ID = availableID;
+    d->tableList.push_back(newTable);
+    d->tableIDList.push_back(availableID);
+    d->tableNameList.push_back(newName.toStdString());
+
+    // Update the data of parent class
+    ONBook::d_ptr->tableList.push_back(newTable);
+
     return newTable;
 }
 
 bool BookModel::removeTable(int tableID)
 {
-    ONBook::removeTable(tableID);
+    int index = d->getTableIndexByID(tableID);
+    if (index < 0)
+        return false;
+
+    d->tableList.erase(d->tableList.begin() + index);
+    d->tableIDList.erase(d->tableIDList.begin() + index);
+    d->tableNameList.erase(d->tableNameList.begin() + index);
+
+    // Update the data of parent class
+    ONBook::d_ptr->tableList.erase(ONBook::d_ptr->tableList.begin() + index);
+
     return true;
 }
 
@@ -87,4 +115,22 @@ bool BookModel::load()
 bool BookModel::save()
 {
     return ONBook::save();
+}
+
+bool BookModelPrivate::loadTable(int tableID, const std::string& tableName)
+{
+    TableModel* table = new TableModel();
+    tableList.push_back(table);
+    if (!(table->setBindingDirectory(getTableDirectory(tableID)) &&
+          table->load()))
+        return false;
+
+    table->ID = tableID;
+    tableIDList.push_back(tableID);
+    tableNameList.push_back(tableName);
+
+    // Update the data of parent class
+    ONBookPrivate::tableList.push_back(table);
+
+    return true;
 }

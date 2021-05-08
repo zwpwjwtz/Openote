@@ -10,6 +10,17 @@ TableModel::TableModel(QObject *parent)
     d = dynamic_cast<TableModelPrivate*>(ONTable::d_ptr);
 }
 
+TableModel::TableModel(const TableModel &src) :
+    ONTable (src.d)
+{
+    d = dynamic_cast<TableModelPrivate*>(ONTable::d_ptr);
+}
+
+TableModel* TableModel::clone(const TableModel& src)
+{
+    return new TableModel(src);
+}
+
 QVariant TableModel::headerData(int section, Qt::Orientation orientation,
                                 int role) const
 {
@@ -58,7 +69,8 @@ int TableModel::columnCount(const QModelIndex& parent) const
 
 QVariant TableModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || role != Qt::DisplayRole)
+    if (!(index.isValid() &&
+         (role == Qt::DisplayRole || role == Qt::EditRole)))
         return QVariant();
 
     int rowID = d->getRowID(index.row());
@@ -85,8 +97,39 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
 bool TableModel::setData(const QModelIndex& index,
                          const QVariant& value, int role)
 {
-    if (data(index, role) != value) {
-        // FIXME: Implement me!
+    if (!(index.isValid() && role == Qt::EditRole))
+        return false;
+
+    bool successful;
+    int rowID = d->getRowID(index.row());
+    int columnID = ONTable::d_ptr->columnIDList[index.column()];
+    switch (ONTable::d_ptr->columnTypeIDList[index.column()])
+    {
+        case ColumnType::Integer:
+            successful = modify(rowID, columnID, value.toInt());
+            break;
+        case ColumnType::Double:
+            successful = modify(rowID, columnID, value.toDouble());
+            break;
+        case ColumnType::String:
+            successful = modify(rowID, columnID,
+                                value.toString().toStdString());
+            break;
+        case ColumnType::IntegerList:
+        {
+            QStringList strings = value.toStringList();
+            std::vector<int> integers;
+            for (int i=0; i<strings.count(); i++)
+                integers.push_back(strings[i].toInt());
+            successful = modify(rowID, columnID, integers);
+            break;
+        }
+        default:
+            successful = false;
+    }
+
+    if (successful)
+    {
         emit dataChanged(index, index, QVector<int>() << role);
         return true;
     }
@@ -98,7 +141,7 @@ Qt::ItemFlags TableModel::flags(const QModelIndex& index) const
     if (!index.isValid())
         return Qt::NoItemFlags;
 
-    return Qt::ItemIsEditable;
+    return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
 }
 
 bool TableModel::insertRows(int row, int count, const QModelIndex& parent)
@@ -126,6 +169,24 @@ bool TableModel::insertColumns(int column, int count,
 
     endInsertColumns();
     return true;
+}
+
+int TableModel::newRow()
+{
+    int rowIndex = countRow();
+    beginInsertRows(QModelIndex(), rowIndex, rowIndex);
+    int rowID = ONTable::newRow();
+    endInsertRows();
+    return rowID;
+}
+
+int TableModel::newColumn(const std::string &name, ColumnType columnType)
+{
+    int columnIndex = countColumn();
+    beginInsertColumns(QModelIndex(), columnIndex, columnIndex);
+    int columnID = ONTable::newColumn(name, columnType);
+    endInsertColumns();
+    return columnID;
 }
 
 bool TableModel::duplicateRow(int row)
