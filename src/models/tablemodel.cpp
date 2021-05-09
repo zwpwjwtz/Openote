@@ -1,5 +1,6 @@
 #include "tablemodel.h"
 #include "tablemodel_p.h"
+#include "bookmodel.h"
 #include "OpenTable/ontable_p.h"
 #include "OpenTable/ontableintcolumn.h"
 #include "OpenTable/ontabledoublecolumn.h"
@@ -15,6 +16,7 @@ TableModel::TableModel(QObject *parent)
 }
 
 TableModel::TableModel(const TableModel &src) :
+    QAbstractItemModel (src.QObject::parent()),
     ONTable (new TableModelPrivate(*src.d))
 {
     d = dynamic_cast<TableModelPrivate*>(ONTable::d_ptr);
@@ -56,6 +58,7 @@ QModelIndex TableModel::index(int row, int column,
 
 QModelIndex TableModel::parent(const QModelIndex& index) const
 {
+    Q_UNUSED(index)
     return QModelIndex();
 }
 
@@ -77,9 +80,22 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
          (role == Qt::DisplayRole || role == Qt::EditRole)))
         return QVariant();
 
-    int rowID = d->getRowID(index.row());
-    int columnID = ONTable::d_ptr->columnIDList[index.column()];
-    switch (ONTable::d_ptr->columnTypeIDList[index.column()])
+    if (d->columnReferenceIDList[index.column()] > 0)
+    {
+        if (role == Qt::DisplayRole)
+            return referenceData(index.row(), index.column());
+        else
+            return QVariant(); // TODO: use customized widgets to edit references
+    }
+    else
+        return nativeData(index.row(), index.column());
+}
+
+QVariant TableModel::nativeData(int rowIndex, int columnIndex) const
+{
+    int rowID = d->getRowID(rowIndex);
+    int columnID = d->columnIDList[columnIndex];
+    switch (d->columnTypeIDList[columnIndex])
     {
         case ColumnType::Integer:
             return readInt(rowID, columnID);
@@ -96,6 +112,65 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
         default:
             return QVariant();
     }
+}
+
+QString TableModel::referenceData(int rowIndex, int columnIndex) const
+{
+    QString targetValue;
+    BookModel* parentBook = dynamic_cast<BookModel*>(QAbstractItemModel::parent());
+    if (parentBook == nullptr)
+        return targetValue;
+
+    int rowID = d->getRowID(rowIndex);
+    int columnID = d->columnIDList[columnIndex];
+
+    // Collect the IDs of referred rows in the specified position
+    std::vector<int> referredRowIDs;
+    switch (d->columnTypeIDList[columnIndex])
+    {
+        case ColumnType::Integer:
+            referredRowIDs.push_back(readInt(rowID, columnID));
+            break;
+        case ColumnType::IntegerList:
+            referredRowIDs = readIntList(rowID, columnID);
+            break;
+        default:
+            return targetValue;
+    }
+
+    // Get the referred table
+    const TableModel* targetTable =
+                        parentBook->columnReferenceTable(ID, columnID);
+
+    // Use the first column in the referred table as data to display
+    if (targetTable->d->columnIDList.size() < 1)
+        return targetValue;
+    int targetColumnID = targetTable->d->columnIDList[0];
+    for (auto i=referredRowIDs.cbegin(); i!=referredRowIDs.cend(); i++)
+    switch (targetTable->d->columnTypeIDList[0])
+    {
+        case ColumnType::Integer:
+            targetValue.append(QString::number(
+                               targetTable->readInt(*i, targetColumnID)));
+            break;
+        case ColumnType::Double:
+            targetValue.append(QString::number(
+                               targetTable->readDouble(*i, targetColumnID)));
+            break;
+        case ColumnType::String:
+            targetValue.append(QString::fromStdString(
+                               targetTable->readString(*i, targetColumnID)));
+            break;
+        case ColumnType::IntegerList:
+        {
+            auto rawList = targetTable->readIntList(*i, targetColumnID);
+            for (auto j=rawList.cbegin(); j!=rawList.cend(); j++)
+                targetValue.append(QString::number(*j));
+            break;
+        }
+        default:;
+    }
+    return targetValue;
 }
 
 bool TableModel::setData(const QModelIndex& index,
@@ -138,6 +213,16 @@ bool TableModel::setData(const QModelIndex& index,
         return true;
     }
     return false;
+}
+
+bool TableModel::setColumnReference(int columnID, int referenceID)
+{
+    int columnIndex = d->getColumnIndexByID(columnID);
+    if (columnIndex < 0)
+        return false;
+
+    d->columnReferenceIDList[columnIndex] = referenceID;
+    return true;
 }
 
 Qt::ItemFlags TableModel::flags(const QModelIndex& index) const
@@ -186,9 +271,19 @@ int TableModel::newRow()
 
 int TableModel::newColumn(const std::string &name, ColumnType columnType)
 {
+    return newColumn(name, columnType, 0);
+}
+
+int TableModel::newColumn(const std::string &name, ColumnType columnType,
+                          int referenceID)
+{
     int columnIndex = countColumn();
     beginInsertColumns(QModelIndex(), columnIndex, columnIndex);
+
     int columnID = ONTable::newColumn(name, columnType);
+    d->columnReferenceIDList.push_back(referenceID);
+    emit columnAdded(ID, columnID, referenceID);
+
     endInsertColumns();
     return columnID;
 }
@@ -239,6 +334,8 @@ bool TableModel::duplicateColumn(int column, const QString& newName)
     d->columnIDList.push_back(availableID);
     d->columnTypeIDList.push_back(newColumn->typeID);
     d->columnNameList.push_back(newName.toStdString());
+    d->columnReferenceIDList.push_back(d->columnReferenceIDList[column]);
+    emit columnAdded(ID, newColumn->ID, d->columnReferenceIDList[column]);
 
     endInsertColumns();
     return true;
@@ -265,16 +362,40 @@ bool TableModel::removeColumns(int column, int count,
 {
     beginRemoveColumns(parent, column, column + count - 1);
 
+    int columnID;
     for (int i=0; i<count; i++)
-        ONTable::removeColumn(ONTable::d_ptr->columnIDList[column]);
+    {
+        columnID = ONTable::d_ptr->columnIDList[column];
+        ONTable::removeColumn(columnID);
+        d->columnReferenceIDList.removeAt(column);
+        emit columnRemoved(ID, columnID);
+    }
 
     endRemoveColumns();
     return true;
 }
 
+bool TableModel::load()
+{
+    if (!ONTable::load())
+        return false;
+
+    // Initialize columnReferenceIDList with zeros
+    // These placeholders are necessary for the following
+    // loading process of BookModel, because only columns
+    // with reference can update their reference IDs in this list
+    int count = d->columnList.size();
+    d->columnReferenceIDList.reserve(count);
+    while (count-- > 0)
+        d->columnReferenceIDList.push_back(0);
+    return true;
+}
+
 TableModelPrivate::TableModelPrivate(const TableModelPrivate& src) :
     ONTablePrivate (src)
-{}
+{
+    columnReferenceIDList = src.columnReferenceIDList;
+}
 
 int TableModelPrivate::getRowID(int rowIndex) const
 {

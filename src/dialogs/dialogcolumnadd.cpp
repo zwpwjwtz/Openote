@@ -7,6 +7,7 @@ DialogColumnAdd::DialogColumnAdd(QWidget *parent) :
     ui(new Ui::DialogColumnAdd)
 {
     ui->setupUi(this);
+    enableReference = true;
     referring = false;
     typeIndex = 0;
     referenceIndex = 0;
@@ -27,7 +28,8 @@ void DialogColumnAdd::showEvent(QShowEvent* event)
 {
     Q_UNUSED(event)
     ui->textName->setText(defaultName);
-    ui->radioReferring->setChecked(referring);
+    ui->radioEmbeddedType->setChecked(!referring);
+    ui->radioReferring->setEnabled(enableReference);
     ui->comboReferTable->clear();
     for (int i=0; i<referenceList.length(); i++)
         ui->comboReferTable->addItem(referenceList[i]);
@@ -42,11 +44,15 @@ void DialogColumnAdd::on_textName_textChanged()
 void DialogColumnAdd::on_radioEmbeddedType_clicked()
 {
     referring = false;
+    ui->comboEmbeddedType->setEnabled(true);
+    ui->comboReferTable->setEnabled(false);
 }
 
 void DialogColumnAdd::on_radioReferring_clicked()
 {
     referring = true;
+    ui->comboEmbeddedType->setEnabled(false);
+    ui->comboReferTable->setEnabled(true);
 }
 
 void DialogColumnAdd::on_comboEmbeddedType_currentIndexChanged(int index)

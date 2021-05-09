@@ -15,6 +15,7 @@ class DialogColumnAdd : public QDialog
 public:
     QString defaultName;
     QString newName;
+    bool enableReference;
     bool referring;
     int typeIndex;
     int referenceIndex;

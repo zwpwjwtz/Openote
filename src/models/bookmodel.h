@@ -17,6 +17,7 @@ public:
 
     void clear();
 
+    int tableCount() const;
     QList<int> tableIDs() const;
 
     QString tableName(int tableID) const;
@@ -27,17 +28,22 @@ public:
     TableModel* duplicateTable(int tableID, const QString& newName);
     bool removeTable(int tableID);
 
+    const TableModel* columnReferenceTable(int sourceTableID,
+                                           int sourceColumnID);
+
     QString path() const;
     bool setPath(const QString& path);
 
     bool load();
     bool save();
 
-signals:
-
 protected:
     BookModelPrivate* d;
     BookModel(BookModelPrivate* data);
+
+private slots:
+    void onTableColumnAdded(int tableID, int columnID, int referenceID);
+    void onTableColumnRemoved(int tableID, int columnID);
 };
 
 #endif // BOOKMODEL_H

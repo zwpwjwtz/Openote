@@ -102,6 +102,12 @@ void ONBook::removeTable(int tableID)
     d_ptr->tableList.erase(d_ptr->tableList.begin() + index);
     d_ptr->tableIDList.erase(d_ptr->tableIDList.begin() + index);
     d_ptr->tableNameList.erase(d_ptr->tableNameList.begin() + index);
+    for (auto i=d_ptr->columnReference.begin();
+         i!=d_ptr->columnReference.cend(); i++)
+    {
+        if (i->first.first == tableID)
+            d_ptr->columnReference.erase(i);
+    }
 }
 
 int ONBook::columnReference(int sourceTableID, int sourceColumnID) const
@@ -122,9 +128,6 @@ bool ONBook::setColumnReference(int sourceTableID,
     int targetIndex = d_ptr->getTableIndexByID(targetTableID);
     if (sourceIndex < 0 || targetIndex < 0 ||
         !d_ptr->tableList[sourceIndex]->existsColumn(sourceColumnID))
-        return false;
-    if (d_ptr->tableList[sourceIndex]->columnType(sourceColumnID) !=
-        ONTable::ColumnType::Integer)
         return false;
 
     auto key = std::make_pair(sourceTableID, sourceColumnID);
@@ -382,10 +385,10 @@ bool ONBookPrivate::addColumnReferences(int targetTableID,
 
         // Parse the column ID
         pos2 = pos1 + 1;
-        pos1 = referenceMapString.find(':', pos2);
+        pos1 = referenceMapString.find(',', pos2);
         if (pos1 == std::string::npos)
         {
-            pos1 = referenceMapString.length() - 1;
+            pos1 = referenceMapString.length();
             if (pos1 <= pos2)
                 break;
         }

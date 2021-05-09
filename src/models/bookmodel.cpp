@@ -11,6 +11,7 @@ BookModel::BookModel(QObject *parent) :
     ONBook (new BookModelPrivate)
 {
     d = dynamic_cast<BookModelPrivate*>(ONBook::d_ptr);
+    d->q_ptr = this;
 }
 
 BookModel::~BookModel()
@@ -28,6 +29,11 @@ void BookModel::clear()
 
     // Update the data of parent class
     ONBook::d_ptr->tableList.clear();
+}
+
+int BookModel::tableCount() const
+{
+    return ONBook::count();
 }
 
 QList<int> BookModel::tableIDs() const
@@ -58,11 +64,15 @@ TableModel* BookModel::addTable(const QString& tableName)
     int availableID = d->tableList.size() > 0 ?
                       d->tableList.back()->ID + 1 : 1;
 
-    TableModel* newTable = new TableModel();
+    TableModel* newTable = new TableModel(this);
     newTable->ID = availableID;
     d->tableList.push_back(newTable);
     d->tableIDList.push_back(availableID);
     d->tableNameList.push_back(tableName.toStdString());
+    connect(newTable, SIGNAL(columnAdded(int, int, int)),
+            this, SLOT(onTableColumnAdded(int, int, int)));
+    connect(newTable, SIGNAL(columnRemoved(int, int)),
+            this, SLOT(onTableColumnRemoved(int, int)));
 
     // Update the data of parent class
     ONBook::d_ptr->tableList.push_back(newTable);
@@ -85,6 +95,19 @@ TableModel* BookModel::duplicateTable(int tableID, const QString& newName)
     d->tableList.push_back(newTable);
     d->tableIDList.push_back(availableID);
     d->tableNameList.push_back(newName.toStdString());
+    for (auto i=d->columnReference.begin(); i!=d->columnReference.cend(); i++)
+    {
+        if (i->first.first == tableID)
+        {
+            d->columnReference.insert(
+                std::make_pair(std::make_pair(newTable->ID, i->first.second),
+                               i->second));
+        }
+    }
+    connect(newTable, SIGNAL(columnAdded(int, int)),
+            this, SLOT(onTableColumnAdded(int, int)));
+    connect(newTable, SIGNAL(columnRemoved(int, int)),
+            this, SLOT(onTableColumnRemoved(int, int)));
 
     // Update the data of parent class
     ONBook::d_ptr->tableList.push_back(newTable);
@@ -98,14 +121,30 @@ bool BookModel::removeTable(int tableID)
     if (index < 0)
         return false;
 
+    delete d->tableList[index];
     d->tableList.erase(d->tableList.begin() + index);
     d->tableIDList.erase(d->tableIDList.begin() + index);
     d->tableNameList.erase(d->tableNameList.begin() + index);
+    for (auto i=d->columnReference.begin(); i!=d->columnReference.cend(); i++)
+    {
+        if (i->first.first == tableID)
+            d->columnReference.erase(i);
+    }
 
     // Update the data of parent class
     ONBook::d_ptr->tableList.erase(ONBook::d_ptr->tableList.begin() + index);
 
     return true;
+}
+
+const TableModel* BookModel::columnReferenceTable(int sourceTableID,
+                                                  int sourceColumnID)
+{
+    int targetTableID = ONBook::columnReference(sourceTableID, sourceColumnID);
+    if (targetTableID > 0)
+        return d->tableList[d->getTableIndexByID(targetTableID)];
+    else
+        return nullptr;
 }
 
 QString BookModel::path() const
@@ -120,7 +159,18 @@ bool BookModel::setPath(const QString& path)
 
 bool BookModel::load()
 {
-    return ONBook::load();
+    if (!ONBook::load())
+        return false;
+
+    // Notify all TableModel with column reference IDs
+    TableModel* table = nullptr;
+    for (auto i=d->columnReference.cbegin(); i!=d->columnReference.cend(); i++)
+    {
+        if (table == nullptr || table->ID != i->first.first)
+            table = d->tableList[d->getTableIndexByID(i->first.first)];
+        table->setColumnReference(i->first.second, i->second);
+    }
+    return true;
 }
 
 bool BookModel::save()
@@ -128,9 +178,20 @@ bool BookModel::save()
     return ONBook::save();
 }
 
+void BookModel::onTableColumnAdded(int tableID, int columnID, int referenceID)
+{
+    if (referenceID > 0)
+        ONBook::setColumnReference(tableID, columnID, referenceID);
+}
+
+void BookModel::onTableColumnRemoved(int tableID, int columnID)
+{
+    ONBook::removeColumnReference(tableID, columnID);
+}
+
 bool BookModelPrivate::loadTable(int tableID, const std::string& tableName)
 {
-    TableModel* table = new TableModel();
+    TableModel* table = new TableModel(q_ptr);
     tableList.push_back(table);
     if (!(table->setBindingDirectory(getTableDirectory(tableID)) &&
           table->load()))

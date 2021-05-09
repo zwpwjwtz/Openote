@@ -113,6 +113,9 @@ void ONTable::clear()
 
 int ONTable::newRow()
 {
+    if (d_ptr->columnList.size() == 0)
+        return 0;
+
     // Assuming increasing ID of row in the list
     int availableID = d_ptr->IDList.size() > 0 ?
                       d_ptr->IDList.back() + 1 :
@@ -237,7 +240,7 @@ std::vector<int> ONTable::readIntList(int ID, int columnID) const
 
     ONTableIntListColumn* column =
             dynamic_cast<ONTableIntListColumn*>(d_ptr->columnList[columnIndex]);
-    if (!column && column->exists(ID))
+    if (!(column && column->exists(ID)))
         return valueList;
 
     int valueCount;
@@ -315,7 +318,17 @@ void ONTable::removeColumn(int columnID)
     std::vector<ONTableColumn*>::iterator i;
     for (i=d_ptr->columnList.begin(); i!=d_ptr->columnList.end(); i++)
         if ((*i)->ID == columnID)
-            d_ptr->columnList.erase(i);
+            break;
+    if (i!=d_ptr->columnList.end())
+    {
+        delete *i;
+        d_ptr->columnList.erase(i);
+
+        long index = i - d_ptr->columnList.begin();
+        d_ptr->columnIDList.erase(d_ptr->columnIDList.begin() + index);
+        d_ptr->columnTypeIDList.erase(d_ptr->columnTypeIDList.begin() + index);
+        d_ptr->columnNameList.erase(d_ptr->columnNameList.begin() + index);
+    }
 }
 
 std::string ONTable::bindingDirectory() const

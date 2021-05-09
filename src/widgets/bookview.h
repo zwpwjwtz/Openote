@@ -53,6 +53,7 @@ private:
     BookModel book;
     DialogColumnAdd* dialogColumnAdd;
     bool isModified;
+    BookIndex currentBookIndex;
 
     int getTableID(int tableIndex) const;
     int getTableIndex(int tableID) const;
@@ -60,6 +61,9 @@ private:
 
     QString columnHeader(int tableIndex, int columnIndex) const;
     bool setColumnHeader(const QString& text, int tableIndex, int columnIndex);
+
+private slots:
+    void onDialogColumnAddFinished(int result);
 };
 
 #endif // BOOKVIEW_H

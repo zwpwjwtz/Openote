@@ -5,10 +5,13 @@
 
 
 class TableModel;
+class BookModel;
 
 class BookModelPrivate : public ONBookPrivate
 {
 public:
+    BookModel* q_ptr;
+
     /* Note: Here "tableList" is to shadow intentionally
      *       the variable of the same name in the parent class.
      *       This is to solve the pointer-drifting issues

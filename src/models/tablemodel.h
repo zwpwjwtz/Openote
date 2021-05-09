@@ -34,10 +34,13 @@ public:
 
     QVariant data(const QModelIndex& index,
                   int role = Qt::DisplayRole) const override;
+    QVariant nativeData(int rowIndex, int columnIndex) const;
+    QString referenceData(int rowIndex, int columnIndex) const;
 
     // Editable:
     bool setData(const QModelIndex& index, const QVariant& value,
                  int role = Qt::EditRole) override;
+    bool setColumnReference(int columnIndex, int referenceID);
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
@@ -48,6 +51,8 @@ public:
                        const QModelIndex& parent = QModelIndex()) override;
     int newRow() override;
     int newColumn(const std::string& name, ColumnType columnType) override;
+    int newColumn(const std::string &name, ColumnType columnType,
+                  int referenceID);
 
     // Dupliate data:
     bool duplicateRow(int row);
@@ -59,8 +64,14 @@ public:
     bool removeColumns(int column, int count,
                        const QModelIndex& parent = QModelIndex()) override;
 
+    bool load() override;
+
 protected:
     TableModelPrivate* d;
+
+signals:
+    void columnAdded(int tableID, int columnID, int referenceID);
+    void columnRemoved(int tableID, int columnID);
 };
 
 #endif // TABLEMODEL_H

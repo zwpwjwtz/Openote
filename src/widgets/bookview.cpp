@@ -90,50 +90,37 @@ bool BookView::modified() const
 
 bool BookView::addColumn()
 {
-    BookIndex index = getCurrentIndex();
+    BookIndex index = currentBookIndex = getCurrentIndex();
     if (index.table < 0)
         return false;
 
     if (dialogColumnAdd == nullptr)
-        dialogColumnAdd = new DialogColumnAdd(this);
-    dialogColumnAdd->exec();
-    if (dialogColumnAdd->result() == QDialog::Rejected ||
-        dialogColumnAdd->newName.isEmpty())
-        return false;
-    if (dialogColumnAdd->referring)
     {
-        // TODO: deal with table reference
+        dialogColumnAdd = new DialogColumnAdd(this);
+        connect(dialogColumnAdd, SIGNAL(finished(int)),
+                this, SLOT(onDialogColumnAddFinished(int)));
+    }
+    if (book.table(getTableID(index.table))->countColumn() < 1)
+    {
+        dialogColumnAdd->enableReference = false;
+        dialogColumnAdd->referring = false;
     }
     else
     {
-        int tableID = getTableID(index.table);
-        TableModel* table = book.table(tableID);
-        auto newName = dialogColumnAdd->newName.toStdString();
-        if (dialogColumnAdd->referring)
-            ;
-        else
-        switch (dialogColumnAdd->typeIndex)
-        {
-            case 0:  // Integer
-                table->newColumn(newName, TableModel::ColumnType::Integer);
-                break;
-            case 1:  // Double
-                table->newColumn(newName, TableModel::ColumnType::Double);
-                break;
-            case 2:  // String
-                table->newColumn(newName, TableModel::ColumnType::String);
-                break;
-            default:;
-        }
+        dialogColumnAdd->enableReference = true;
+        dialogColumnAdd->referenceList.clear();
+        auto tableIDs = book.tableIDs();
+        for (auto i=tableIDs.cbegin(); i!=tableIDs.cend(); i++)
+            dialogColumnAdd->referenceList.push_back(book.tableName(*i));
     }
 
-    isModified = true;
+    dialogColumnAdd->open();
     return true;
 }
 
 bool BookView::deleteColumn()
 {
-    BookIndex index = getCurrentIndex();
+    BookIndex index = currentBookIndex = getCurrentIndex();
     if (!index.isValid())
         return false;
 
@@ -144,7 +131,7 @@ bool BookView::deleteColumn()
 
 bool BookView::duplicateColumn()
 {
-    BookIndex index = getCurrentIndex();
+    BookIndex index = currentBookIndex = getCurrentIndex();
     if (index.table < 0 || index.column < 0)
         return false;
 
@@ -159,6 +146,7 @@ bool BookView::duplicateColumn()
     TableModel* table = book.table(getTableID(index.table));
     if (table->duplicateColumn(index.column, newName))
     {
+
         isModified = true;
         return true;
     }
@@ -168,7 +156,7 @@ bool BookView::duplicateColumn()
 
 bool BookView::renameColumn()
 {
-    BookIndex index = getCurrentIndex();
+    BookIndex index = currentBookIndex = getCurrentIndex();
     if (!index.isValid())
         return false;
 
@@ -193,11 +181,17 @@ bool BookView::renameColumn()
 
 bool BookView::addRow()
 {
-    BookIndex index = getCurrentIndex();
+    BookIndex index = currentBookIndex = getCurrentIndex();
     if (index.table < 0)
         return false;
 
     TableModel* table = book.table(getTableID(index.table));
+    if (table->countColumn() == 0)
+    {
+        QMessageBox::warning(this, "No column presents",
+                             "Please add a column before adding rows.");
+        return false;
+    }
     table->newRow();
 
     isModified = true;
@@ -206,7 +200,7 @@ bool BookView::addRow()
 
 bool BookView::deleteRow()
 {
-    BookIndex index = getCurrentIndex();
+    BookIndex index = currentBookIndex = getCurrentIndex();
     if (!index.isValid())
         return false;
 
@@ -219,7 +213,7 @@ bool BookView::deleteRow()
 
 bool BookView::duplicateRow()
 {
-    BookIndex index = getCurrentIndex();
+    BookIndex index = currentBookIndex = getCurrentIndex();
     if (!index.isValid())
         return false;
 
@@ -247,6 +241,7 @@ bool BookView::addTable()
     viewTable->setModel(newTable);
     viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
     addTab(viewTable, newName);
+    setCurrentWidget(viewTable);
 
     isModified = true;
     return true;
@@ -254,8 +249,7 @@ bool BookView::addTable()
 
 bool BookView::deleteTable()
 {
-    // TODO: check for reference before deleting
-    BookIndex index = getCurrentIndex();
+    BookIndex index = currentBookIndex = getCurrentIndex();
     if (index.table < 0)
         return false;
 
@@ -279,7 +273,7 @@ bool BookView::deleteTable()
 
 bool BookView::duplicateTable()
 {
-    BookIndex index = getCurrentIndex();
+    BookIndex index = currentBookIndex = getCurrentIndex();
     if (index.table < 0)
         return false;
 
@@ -308,7 +302,7 @@ bool BookView::duplicateTable()
 
 bool BookView::renameTable()
 {
-    BookIndex index = getCurrentIndex();
+    BookIndex index = currentBookIndex = getCurrentIndex();
     if (index.table < 0)
         return false;
 
@@ -378,4 +372,60 @@ bool BookView::setColumnHeader(const QString &text,
     book.table(getTableID(tableIndex))->
                             setHeaderData(columnIndex, Qt::Horizontal, text);
     return true;
+}
+
+void BookView::onDialogColumnAddFinished(int result)
+{
+    if (result == QDialog::Rejected || dialogColumnAdd->newName.isEmpty())
+        return;
+
+    int tableID = getTableID(currentBookIndex.table);
+    int referenceTableID;
+    if (dialogColumnAdd->referring)
+    {
+        auto tableIDs = book.tableIDs();
+        referenceTableID = tableIDs[dialogColumnAdd->referenceIndex];
+        if (referenceTableID == tableID)
+        {
+            QMessageBox::warning(this, "Failed creating column",
+                                 "Creating a column referring to its "
+                                 "parent table is not allowed. \n"
+                                 "Please select another reference table.");
+            dialogColumnAdd->open();
+            return;
+        }
+    }
+
+    TableModel* table = book.table(tableID);
+    std::string newName = dialogColumnAdd->newName.toStdString();
+    if (dialogColumnAdd->referring)
+    {
+        if (table->newColumn(newName,
+                             TableModel::ColumnType::IntegerList,
+                             referenceTableID) <= 0)
+        {
+            QMessageBox::critical(this, "Failed creating column",
+                                  "An error occurred when creating a column "
+                                  "referring to another table.");
+            return;
+        }
+    }
+    else
+    {
+        switch (dialogColumnAdd->typeIndex)
+        {
+            case 0:  // Integer
+                table->newColumn(newName, TableModel::ColumnType::Integer);
+                break;
+            case 1:  // Double
+                table->newColumn(newName, TableModel::ColumnType::Double);
+                break;
+            case 2:  // String
+                table->newColumn(newName, TableModel::ColumnType::String);
+                break;
+            default:;
+        }
+    }
+
+    isModified = true;
 }
