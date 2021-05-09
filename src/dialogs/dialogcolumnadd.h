@@ -34,6 +34,8 @@ private slots:
     void on_textName_textChanged();
     void on_radioEmbeddedType_clicked();
     void on_radioReferring_clicked();
+    void on_comboEmbeddedType_currentIndexChanged(int index);
+    void on_comboReferTable_currentIndexChanged(int index);
 };
 
 #endif // DIALOGCOLUMNADD_H

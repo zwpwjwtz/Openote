@@ -48,3 +48,13 @@ void DialogColumnAdd::on_radioReferring_clicked()
 {
     referring = true;
 }
+
+void DialogColumnAdd::on_comboEmbeddedType_currentIndexChanged(int index)
+{
+    typeIndex = index;
+}
+
+void DialogColumnAdd::on_comboReferTable_currentIndexChanged(int index)
+{
+    referenceIndex = index;
+}

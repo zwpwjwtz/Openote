@@ -25,6 +25,11 @@ ONTableIntListColumn::ONTableIntListColumn(const ONTableIntListColumn& src) :
     std::map<int, char*>::const_iterator i;
     for (i=src.d->data.cbegin(); i!=src.d->data.cend(); i++)
     {
+        if (i->second == nullptr)
+        {
+            d->data.insert(std::make_pair(i->first, nullptr));
+            continue;
+        }
         memcpy(&dataLength, i->second, sizeof(int));
         if (dataLength < 0)
             continue;
@@ -165,6 +170,8 @@ bool ONTableIntListColumn::save()
     std::map<int, char*>::const_iterator i;
     for (i=d_ptr->data.cbegin(); i!=d_ptr->data.cend(); i++)
     {
+        if (i->second == nullptr)
+            continue;
         memcpy(&valueLength, i->second, sizeof(int));
         fprintf(f, "%d%s", i->first, d->fieldDelimiter);
         fprintf(f, "%d%s", valueLength, d->fieldDelimiter);

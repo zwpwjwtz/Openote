@@ -4,9 +4,9 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "ontable.h"
 
 
+class ONTable;
 class ONBook;
 
 class ONBookPrivate

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstring>
 #include <sstream>
+#include "ontable.h"
 #include "ontable_p.h"
 #include "ontableintcolumn.h"
 #include "ontabledoublecolumn.h"
@@ -18,12 +19,19 @@
 ONTable::ONTable()
 {
     d_ptr = new ONTablePrivate();
+
+    d_ptr->defaultIntValue = 0;
+    d_ptr->defaultDoubleValue = 0.0;
 }
 
 ONTable::ONTable(const ONTable& src)
 {
-    ID = src.ID;
     d_ptr = new ONTablePrivate(*(src.d_ptr));
+
+    ID = src.ID;
+    d_ptr->defaultIntValue = src.d_ptr->defaultIntValue;
+    d_ptr->defaultDoubleValue = src.d_ptr->defaultDoubleValue;
+    d_ptr->defaultStringValue = src.d_ptr->defaultStringValue;
 }
 
 ONTable::ONTable(ONTablePrivate* data)
@@ -32,6 +40,9 @@ ONTable::ONTable(ONTablePrivate* data)
         ONTable();
     else
         d_ptr = data;
+
+    d_ptr->defaultIntValue = 0;
+    d_ptr->defaultDoubleValue = 0.0;
 }
 
 ONTable::~ONTable()
@@ -156,15 +167,33 @@ ONTable::ColumnType ONTable::columnType(int columnID) const
         return ColumnType::None;
 }
 
+ONTableDefaultValue ONTable::defaultValues() const
+{
+    return ONTableDefaultValue{ d_ptr->defaultIntValue,
+                                d_ptr->defaultDoubleValue,
+                                d_ptr->defaultStringValue };
+}
+
+void ONTable::setDefaultValues(const ONTableDefaultValue& values)
+{
+    d_ptr->defaultIntValue = values.intValue;
+    d_ptr->defaultDoubleValue = values.doubleValue;
+    d_ptr->defaultStringValue = values.stringValue;
+}
+
 int ONTable::readInt(int ID, int columnID) const
 {
     int columnIndex = d_ptr->getColumnIndexByID(columnID);
 #ifdef ONTABLE_COLUMN_TYPE_CHECK
     if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::Integer)
-        return false;
+        return defaultIntValue;
 #endif
-    return dynamic_cast<ONTableIntColumn*>
-                (d_ptr->columnList[columnIndex])->valueAsInt(ID);
+    ONTableIntColumn* column =
+            dynamic_cast<ONTableIntColumn*>(d_ptr->columnList[columnIndex]);
+    if (column && column->exists(ID))
+        return column->valueAsInt(ID);
+    else
+        return d_ptr->defaultIntValue;
 }
 
 double ONTable::readDouble(int ID, int columnID) const
@@ -172,10 +201,14 @@ double ONTable::readDouble(int ID, int columnID) const
     int columnIndex = d_ptr->getColumnIndexByID(columnID);
 #ifdef ONTABLE_COLUMN_TYPE_CHECK
     if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::Double)
-        return false;
+        return defaultDoubleValue;
 #endif
-    return dynamic_cast<ONTableDoubleColumn*>
-                (d_ptr->columnList[columnIndex])->valueAsDouble(ID);
+    ONTableDoubleColumn* column =
+            dynamic_cast<ONTableDoubleColumn*>(d_ptr->columnList[columnIndex]);
+    if (column && column->exists(ID))
+        return column->valueAsDouble(ID);
+    else
+        return d_ptr->defaultDoubleValue;
 }
 
 std::string ONTable::readString(int ID, int columnID) const
@@ -183,24 +216,32 @@ std::string ONTable::readString(int ID, int columnID) const
     int columnIndex = d_ptr->getColumnIndexByID(columnID);
 #ifdef ONTABLE_COLUMN_TYPE_CHECK
     if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::String)
-        return false;
+        return defaultStringValue;
 #endif
-    return dynamic_cast<ONTableStringColumn*>
-                (d_ptr->columnList[columnIndex])->valueAsString(ID);
+    ONTableStringColumn* column =
+            dynamic_cast<ONTableStringColumn*>(d_ptr->columnList[columnIndex]);
+    if (column && column->exists(ID))
+        return column->valueAsString(ID);
+    else
+        return d_ptr->defaultStringValue;
 }
 
 std::vector<int> ONTable::readIntList(int ID, int columnID) const
 {
+    std::vector<int> valueList;
     int columnIndex = d_ptr->getColumnIndexByID(columnID);
 #ifdef ONTABLE_COLUMN_TYPE_CHECK
     if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::IntegerList)
-        return false;
+        return std::vector<int>();
 #endif
-    int valueCount;
-    int* values = dynamic_cast<ONTableIntListColumn*>
-            (d_ptr->columnList[columnIndex])->valueAsIntList(ID, valueCount);
 
-    std::vector<int> valueList;
+    ONTableIntListColumn* column =
+            dynamic_cast<ONTableIntListColumn*>(d_ptr->columnList[columnIndex]);
+    if (!column && column->exists(ID))
+        return valueList;
+
+    int valueCount;
+    int* values = column->valueAsIntList(ID, valueCount);
     if (valueCount > 0)
         valueList = std::vector<int>(values, values + valueCount);
     delete[] values;
@@ -332,7 +373,7 @@ bool ONTable::load()
     std::string columnFilename;
     while (!feof(f))
     {
-        if (fgets(buffer, '\n', f) != buffer)
+        if (fgets(buffer, ONTABLE_TABLE_IO_BUFFER_MAXLEN - 1, f) != buffer)
             break;
 
         // Parse the column index, the column type ID and
@@ -393,6 +434,8 @@ bool ONTable::save()
 
 ONTablePrivate::ONTablePrivate()
 {
+    defaultIntValue = 0;
+    defaultDoubleValue = 0.0;
 }
 
 ONTablePrivate::~ONTablePrivate()
@@ -440,6 +483,9 @@ ONTablePrivate::ONTablePrivate(const ONTablePrivate& src)
         columnTypeIDList = src.columnTypeIDList;
         columnNameList = src.columnNameList;
         IDList = src.IDList;
+
+        defaultIntValue = src.defaultIntValue;
+        defaultDoubleValue = src.defaultDoubleValue;
     }
 }
 
@@ -548,47 +594,4 @@ bool ONTablePrivate::saveColumn(int columnIndex)
         column->setBindingFile(oldFilename.c_str());
         return false;
     }
-}
-
-ONTable::ColumnType
-ONTablePrivate::getColumnType(int columnID, const std::string& indexFilename)
-{
-    ONTable::ColumnType columnType = ONTable::ColumnType::None;
-    if (!utils_isFile(indexFilename.c_str()))
-        return columnType;
-
-    char buffer[ONTABLE_TABLE_IO_BUFFER_MAXLEN];
-    FILE* f = fopen(indexFilename.c_str(), "rb");
-
-    // Check for the index file header
-    fread(buffer, 1, strlen(ONTABLE_TABLE_INDEX_FILE_HEADER), f);
-    if (strncmp(buffer, ONTABLE_TABLE_INDEX_FILE_HEADER,
-                strlen(ONTABLE_TABLE_INDEX_FILE_HEADER)) != 0)
-    {
-        fclose(f);
-        return columnType;
-    }
-
-    // Ignore version check
-    fseek(f, strlen(ONTABLE_TABLE_INDEX_FILE_VERSION), SEEK_CUR);
-
-    char* pos, *pos2;
-    while (!feof(f))
-    {
-        if (fgets(buffer, '\n', f) != buffer)
-            break;
-
-        // Parse the column index and the column type ID from each line
-        pos = strstr(buffer, ",");
-        if (!pos)
-            continue;
-        if (strtol(buffer, &pos2, 10) != columnID || buffer == pos2)
-            continue;
-
-        columnType =  ONTable::ColumnType(atoi(pos + 1));
-        break;
-    }
-    fclose(f);
-
-    return columnType;
 }

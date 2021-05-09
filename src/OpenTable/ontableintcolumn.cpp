@@ -22,6 +22,11 @@ ONTableIntColumn::ONTableIntColumn(const ONTableIntColumn& src) :
     std::map<int, char*>::const_iterator i;
     for (i=src.d->data.cbegin(); i!=src.d->data.cend(); i++)
     {
+        if (i->second == nullptr)
+        {
+            d->data.insert(std::make_pair(i->first, nullptr));
+            continue;
+        }
         newData = new int;
         memcpy(newData, i->second, sizeof(int));
         d->data.insert(std::make_pair(i->first,
@@ -123,6 +128,8 @@ bool ONTableIntColumn::save()
     std::map<int, char*>::const_iterator i;
     for (i=d_ptr->data.cbegin(); i!=d_ptr->data.cend(); i++)
     {
+        if (i->second == nullptr)
+            continue;
         memcpy(&value, i->second, sizeof(int));
         fprintf(f, "%d%s%d%s",
                 i->first,

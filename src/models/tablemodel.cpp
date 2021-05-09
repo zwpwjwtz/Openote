@@ -1,6 +1,10 @@
 #include "tablemodel.h"
 #include "tablemodel_p.h"
 #include "OpenTable/ontable_p.h"
+#include "OpenTable/ontableintcolumn.h"
+#include "OpenTable/ontabledoublecolumn.h"
+#include "OpenTable/ontablestringcolumn.h"
+#include "OpenTable/ontableintlistcolumn.h"
 
 
 TableModel::TableModel(QObject *parent)
@@ -11,7 +15,7 @@ TableModel::TableModel(QObject *parent)
 }
 
 TableModel::TableModel(const TableModel &src) :
-    ONTable (src.d)
+    ONTable (new TableModelPrivate(*src.d))
 {
     d = dynamic_cast<TableModelPrivate*>(ONTable::d_ptr);
 }
@@ -52,7 +56,7 @@ QModelIndex TableModel::index(int row, int column,
 
 QModelIndex TableModel::parent(const QModelIndex& index) const
 {
-    return index;
+    return QModelIndex();
 }
 
 int TableModel::rowCount(const QModelIndex& parent) const
@@ -195,9 +199,48 @@ bool TableModel::duplicateRow(int row)
     return true;
 }
 
-bool TableModel::duplicateColumn(int column)
+bool TableModel::duplicateColumn(int column, const QString& newName)
 {
-    // TODO: duplicate the content of the column
+    int columnIndex = countColumn();
+    beginInsertColumns(QModelIndex(), columnIndex, columnIndex);
+
+    ONTableColumn* oldColumn = ONTable::d_ptr->columnList[column];
+    ONTableColumn* newColumn;
+    switch (oldColumn->typeID)
+    {
+        case ColumnType::Integer:
+            newColumn = new ONTableIntColumn(
+                            *(ONTableIntColumn*)oldColumn);
+            break;
+        case ColumnType::Double:
+            newColumn = new ONTableDoubleColumn(
+                            *(ONTableDoubleColumn*)oldColumn);
+            break;
+        case ColumnType::String:
+            newColumn = new ONTableStringColumn(
+                            *(ONTableStringColumn*)oldColumn);
+            break;
+        case ColumnType::IntegerList:
+            newColumn = new ONTableIntListColumn(
+                            *(ONTableIntListColumn*)oldColumn);
+            break;
+        default:
+            newColumn = nullptr;
+            endInsertColumns();
+            return false;
+    }
+
+    // Assuming increasing ID of column in the list
+    int availableID = d->columnList.size() > 0 ?
+                      d->columnList.back()->ID + 1 :
+                      1;
+    newColumn->ID = availableID;
+    d->columnList.push_back(newColumn);
+    d->columnIDList.push_back(availableID);
+    d->columnTypeIDList.push_back(newColumn->typeID);
+    d->columnNameList.push_back(newName.toStdString());
+
+    endInsertColumns();
     return true;
 }
 
@@ -228,6 +271,10 @@ bool TableModel::removeColumns(int column, int count,
     endRemoveColumns();
     return true;
 }
+
+TableModelPrivate::TableModelPrivate(const TableModelPrivate& src) :
+    ONTablePrivate (src)
+{}
 
 int TableModelPrivate::getRowID(int rowIndex) const
 {

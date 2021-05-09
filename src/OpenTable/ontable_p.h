@@ -4,7 +4,6 @@
 #include <list>
 #include <vector>
 #include <string>
-#include "ontable.h"
 #include "ontablecolumn.h"
 
 
@@ -25,6 +24,10 @@ public:
 
     std::vector<ONTableColumn*> columnList;
 
+    int defaultIntValue;
+    double defaultDoubleValue;
+    std::string defaultStringValue;
+
     virtual int getColumnIndexByID(int columnID) const;
     virtual std::string getIndexFilename() const;
     virtual std::string getColumnFilename(int columnID) const;
@@ -32,9 +35,6 @@ public:
     virtual bool loadColumn(int columnID, int columnType,
                             const std::string& columnName);
     virtual bool saveColumn(int columnIndex);
-
-    static ONTable::ColumnType getColumnType(int columnID,
-                                             const std::string& indexFilename);
 };
 
 #endif // ONTABLE_P_H

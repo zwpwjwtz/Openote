@@ -118,10 +118,10 @@ bool BookView::addColumn()
                 table->newColumn(newName, TableModel::ColumnType::Integer);
                 break;
             case 1:  // Double
-                table->newColumn(newName, TableModel::ColumnType::Integer);
+                table->newColumn(newName, TableModel::ColumnType::Double);
                 break;
             case 2:  // String
-                table->newColumn(newName, TableModel::ColumnType::Integer);
+                table->newColumn(newName, TableModel::ColumnType::String);
                 break;
             default:;
         }
@@ -156,8 +156,8 @@ bool BookView::duplicateColumn()
     if (newName.isEmpty())
         return false;
 
-    TableModel* table = book.table(index.table);
-    if (table->duplicateColumn(index.column))
+    TableModel* table = book.table(getTableID(index.table));
+    if (table->duplicateColumn(index.column, newName))
     {
         isModified = true;
         return true;
@@ -177,8 +177,11 @@ bool BookView::renameColumn()
                                             "New name for the column:",
                                             QLineEdit::Normal,
                                             oldName);
-    if (newName == oldName)
+    newName.replace("\n", "");
+    newName.replace("\"", "'");
+    if (newName.isEmpty() || newName == oldName)
         return true;
+
     if (setColumnHeader(newName, index.table, index.column))
     {
         isModified = true;
@@ -259,7 +262,8 @@ bool BookView::deleteTable()
     int tableID = getTableID(index.table);
     if (QMessageBox::warning(this, "Delete a table",
                              QString("Are you sure to delete table %1 ?")
-                                    .arg(book.tableName(tableID)))
+                                    .arg(book.tableName(tableID)),
+                             QMessageBox::Yes | QMessageBox::No)
             != QMessageBox::Yes)
         return false;
 
@@ -314,10 +318,11 @@ bool BookView::renameTable()
                                             "New name for the column:",
                                             QLineEdit::Normal,
                                             oldName);
-    if (newName.isEmpty())
-        return false;
-    if (newName == oldName)
+    newName.replace("\n", "");
+    newName.replace("\"", "'");
+    if (newName.isEmpty() || newName == oldName)
         return true;
+
     if (book.setTableName(tableID, newName))
     {
         setTabText(currentIndex(), newName);
@@ -363,13 +368,14 @@ BookView::BookIndex BookView::getCurrentIndex() const
 
 QString BookView::columnHeader(int tableIndex, int columnIndex) const
 {
-    return book.table(tableIndex)->headerData(columnIndex,
-                                               Qt::Horizontal).toString();
+    return book.table(getTableID(tableIndex))->
+                            headerData(columnIndex, Qt::Horizontal).toString();
 }
 
 bool BookView::setColumnHeader(const QString &text,
                                int tableIndex, int columnIndex)
 {
-    book.table(tableIndex)->setHeaderData(columnIndex, Qt::Horizontal, text);
+    book.table(getTableID(tableIndex))->
+                            setHeaderData(columnIndex, Qt::Horizontal, text);
     return true;
 }

@@ -13,10 +13,21 @@ BookModel::BookModel(QObject *parent) :
     d = dynamic_cast<BookModelPrivate*>(ONBook::d_ptr);
 }
 
+BookModel::~BookModel()
+{
+    clear();
+}
+
 void BookModel::clear()
 {
-    ONBook::clear();
+    for (size_t i=0; i<d->tableList.size(); i++)
+        delete d->tableList[i];
     d->tableList.clear();
+    d->tableIDList.clear();
+    d->tableNameList.clear();
+
+    // Update the data of parent class
+    ONBook::d_ptr->tableList.clear();
 }
 
 QList<int> BookModel::tableIDs() const

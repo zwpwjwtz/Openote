@@ -13,6 +13,7 @@ class BookModel : public QObject, protected ONBook
     Q_OBJECT
 public:
     explicit BookModel(QObject *parent = nullptr);
+    virtual ~BookModel();
 
     void clear();
 

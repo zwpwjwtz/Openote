@@ -46,6 +46,8 @@ std::vector<int> ONBook::tableIDs() const
 
 void ONBook::clear()
 {
+    for (size_t i=0; i<d_ptr->tableList.size(); i++)
+        delete d_ptr->tableList[i];
     d_ptr->tableList.clear();
     d_ptr->tableIDList.clear();
     d_ptr->tableNameList.clear();

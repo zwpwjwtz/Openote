@@ -6,6 +6,13 @@
 #include <string>
 
 
+struct ONTableDefaultValue
+{
+    int intValue;
+    double doubleValue;
+    std::string stringValue;
+};
+
 class ONTablePrivate;
 
 class ONTable
@@ -44,6 +51,9 @@ public:
     virtual int newColumn(const std::string& name, ColumnType columnType);
 
     virtual ColumnType columnType(int columnID) const;
+    virtual ONTableDefaultValue defaultValues() const;
+    virtual void setDefaultValues(const ONTableDefaultValue& values);
+
     virtual int readInt(int ID, int columnID) const;
     virtual double readDouble(int ID, int columnID) const;
     virtual std::string readString(int ID, int columnID) const;

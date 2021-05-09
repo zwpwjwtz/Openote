@@ -7,6 +7,9 @@
 class TableModelPrivate : public ONTablePrivate
 {
 public:
+    TableModelPrivate() {}
+    TableModelPrivate(const TableModelPrivate& src);
+
     int getRowID(int rowIndex) const;
 };
 

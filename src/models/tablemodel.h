@@ -51,7 +51,7 @@ public:
 
     // Dupliate data:
     bool duplicateRow(int row);
-    bool duplicateColumn(int column);
+    bool duplicateColumn(int column, const QString &newName);
 
     // Remove data:
     bool removeRows(int row, int count,
