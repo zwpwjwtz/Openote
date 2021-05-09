@@ -88,6 +88,32 @@ void ONTableIntListColumn::set(int key, const int* valueList, int count)
     }
 }
 
+void ONTableIntListColumn::duplicate(int oldKey, int newKey)
+{
+    std::map<int, char*>::iterator pos1 = d_ptr->data.find(oldKey);
+    std::map<int, char*>::iterator pos2 = d_ptr->data.find(newKey);
+    if (pos1 == d_ptr->data.end())
+        return;
+
+    size_t count;
+    int* data = nullptr;
+    if ((*pos1).second != nullptr)
+    {
+        memcpy(&count, (*pos1).second, sizeof(int));
+        data = new int[sizeof(int) + count];
+        memcpy(data, (*pos1).second, sizeof(int) + count);
+    }
+    if ((pos2 == d_ptr->data.end()))
+        d_ptr->data.insert(pos2,
+                       std::make_pair(newKey, reinterpret_cast<char*>(data)));
+    else
+    {
+        if ((*pos2).second == nullptr)
+            delete (*pos2).second;
+        (*pos2).second = reinterpret_cast<char*>(data);
+    }
+}
+
 void ONTableIntListColumn::remove(int key)
 {
     std::map<int, char*>::const_iterator pos = d->data.find(key);

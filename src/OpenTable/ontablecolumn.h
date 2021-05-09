@@ -24,6 +24,7 @@ public:
     virtual char* value(int key) const;
     virtual char** values() const;
     virtual void set(int key, char* value);
+    virtual void duplicate(int oldKey, int newKey);
     virtual void remove(int key);
 
     virtual const char* bindingFile();

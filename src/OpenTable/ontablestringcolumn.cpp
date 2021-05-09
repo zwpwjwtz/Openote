@@ -81,6 +81,31 @@ void ONTableStringColumn::set(int key, const std::string& value)
     }
 }
 
+void ONTableStringColumn::duplicate(int oldKey, int newKey)
+{
+    std::map<int, char*>::iterator pos1 = d_ptr->data.find(oldKey);
+    std::map<int, char*>::iterator pos2 = d_ptr->data.find(newKey);
+    if (pos1 == d_ptr->data.end())
+        return;
+
+    char* data = nullptr;
+    size_t stringLength;
+    if ((*pos1).second != nullptr)
+    {
+        memcpy(&stringLength, (*pos1).second, sizeof(int));
+        data = new char[sizeof(int) + stringLength];
+        memcpy(data, (*pos1).second, sizeof(int) + stringLength);
+    }
+    if ((pos2 == d_ptr->data.end()))
+        d_ptr->data.insert(pos2, std::make_pair(newKey, data));
+    else
+    {
+        if ((*pos2).second != nullptr)
+            delete (*pos2).second;
+        (*pos2).second = data;
+    }
+}
+
 void ONTableStringColumn::remove(int key)
 {
     std::map<int, char*>::const_iterator pos = d->data.find(key);

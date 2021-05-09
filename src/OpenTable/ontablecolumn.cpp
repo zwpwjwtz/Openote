@@ -94,6 +94,19 @@ void ONTableColumn::set(int key, char* value)
         d_ptr->data.insert(std::make_pair(key, value));
 }
 
+void ONTableColumn::duplicate(int oldKey, int newKey)
+{
+    std::map<int, char*>::iterator pos1 = d_ptr->data.find(oldKey);
+    std::map<int, char*>::iterator pos2 = d_ptr->data.find(newKey);
+    if (pos1 != d_ptr->data.end())
+    {
+        if (pos2 == d_ptr->data.end())
+            d_ptr->data.insert(pos2, *pos1);
+        else
+            (*pos2).second = (*pos1).second;
+    }
+}
+
 void ONTableColumn::remove(int key)
 {
     d_ptr->data.erase(key);

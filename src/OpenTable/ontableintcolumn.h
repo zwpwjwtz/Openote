@@ -15,6 +15,7 @@ public:
 
     virtual int valueAsInt(int key) const;
     virtual void set(int key, int value = 0);
+    virtual void duplicate(int oldKey, int newKey);
     virtual void remove(int key);
 
     virtual bool load();

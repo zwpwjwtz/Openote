@@ -16,6 +16,7 @@ public:
 
     virtual std::string valueAsString(int key) const;
     virtual void set(int key, const std::string& value);
+    virtual void duplicate(int oldKey, int newKey);
     virtual void remove(int key);
 
     virtual bool load();

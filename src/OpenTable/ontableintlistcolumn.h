@@ -16,6 +16,7 @@ public:
 
     virtual int* valueAsIntList(int key, int& count) const;
     virtual void set(int key, const int* values, int count);
+    virtual void duplicate(int oldKey, int newKey);
     virtual void remove(int key);
 
     virtual bool load();

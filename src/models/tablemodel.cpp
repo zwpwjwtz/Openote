@@ -290,7 +290,33 @@ int TableModel::newColumn(const std::string &name, ColumnType columnType,
 
 bool TableModel::duplicateRow(int row)
 {
-    // TODO: duplicate the content of the raw
+    int rowIndex = countRow();
+    beginInsertRows(QModelIndex(), rowIndex, rowIndex);
+
+    int oldRowID = d->getRowID(row);
+    int newRowID = ONTable::newRow();
+    int columnCount = d->columnList.size();
+    for (int i=0; i<columnCount; i++)
+    {
+        ONTableColumn* column = d->columnList[i];
+        switch (d->columnTypeIDList[i])
+        {
+            case ColumnType::Integer:
+                ((ONTableIntColumn*)column)->duplicate(oldRowID, newRowID);
+                break;
+            case ColumnType::Double:
+                ((ONTableDoubleColumn*)column)->duplicate(oldRowID, newRowID);
+                break;
+            case ColumnType::String:
+                ((ONTableStringColumn*)column)->duplicate(oldRowID, newRowID);
+                break;
+            case ColumnType::IntegerList:
+                ((ONTableIntListColumn*)column)->duplicate(oldRowID, newRowID);
+                break;
+            default:;
+        }
+    }
+    endInsertRows();
     return true;
 }
 

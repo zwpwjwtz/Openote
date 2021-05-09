@@ -69,6 +69,41 @@ void ONTableDoubleColumn::set(int key, double value)
     }
 }
 
+void ONTableDoubleColumn::duplicate(int oldKey, int newKey)
+{
+    std::map<int, char*>::iterator pos1 = d_ptr->data.find(oldKey);
+    std::map<int, char*>::iterator pos2 = d_ptr->data.find(newKey);
+    if (pos1 == d_ptr->data.end())
+        return;
+
+    if (pos2 == d_ptr->data.end())
+    {
+        double* data = nullptr;
+        if ((*pos1).second != nullptr)
+        {
+            data = new double;
+            memcpy(data, (*pos1).second, sizeof(double));
+        }
+        d_ptr->data.insert(pos2,
+                       std::make_pair(newKey, reinterpret_cast<char*>(data)));
+    }
+    else
+    {
+        if ((*pos1).second == nullptr)
+        {
+            if ((*pos2).second != nullptr)
+                delete (*pos2).second;
+            (*pos2).second = nullptr;
+        }
+        else
+        {
+            if ((*pos2).second == nullptr)
+                (*pos2).second = reinterpret_cast<char*>(new double);
+            memcpy((*pos2).second, (*pos1).second, sizeof(double));
+        }
+    }
+}
+
 void ONTableDoubleColumn::remove(int key)
 {
     std::map<int, char*>::const_iterator pos = d->data.find(key);
