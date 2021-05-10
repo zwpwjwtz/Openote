@@ -154,7 +154,10 @@ QString BookModel::path() const
 
 bool BookModel::setPath(const QString& path)
 {
-    return ONBook::setBindingDirectory(path.toStdString());
+    if (!path.isEmpty())
+        return ONBook::setBindingDirectory(path.toStdString());
+    ONBook::clearBindingDirectory();
+    return true;
 }
 
 bool BookModel::load()

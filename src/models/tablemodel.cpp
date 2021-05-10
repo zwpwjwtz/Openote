@@ -179,28 +179,34 @@ bool TableModel::setData(const QModelIndex& index,
     if (!(index.isValid() && role == Qt::EditRole))
         return false;
 
-    bool successful;
+    bool successful = true;
     int rowID = d->getRowID(index.row());
     int columnID = ONTable::d_ptr->columnIDList[index.column()];
     switch (ONTable::d_ptr->columnTypeIDList[index.column()])
     {
         case ColumnType::Integer:
-            successful = modify(rowID, columnID, value.toInt());
+            if (readInt(rowID, columnID) != value.toInt())
+                successful = modify(rowID, columnID, value.toInt());
             break;
         case ColumnType::Double:
-            successful = modify(rowID, columnID, value.toDouble());
+            if (readDouble(rowID, columnID) != value.toDouble())
+                successful = modify(rowID, columnID, value.toDouble());
             break;
         case ColumnType::String:
-            successful = modify(rowID, columnID,
-                                value.toString().toStdString());
+        {
+            std::string rawString = value.toString().toStdString();
+            if (readString(rowID, columnID) != rawString)
+                successful = modify(rowID, columnID, rawString);
             break;
+        }
         case ColumnType::IntegerList:
         {
             QStringList strings = value.toStringList();
             std::vector<int> integers;
             for (int i=0; i<strings.count(); i++)
                 integers.push_back(strings[i].toInt());
-            successful = modify(rowID, columnID, integers);
+            if (readIntList(rowID, columnID) != integers)
+                successful = modify(rowID, columnID, integers);
             break;
         }
         default:

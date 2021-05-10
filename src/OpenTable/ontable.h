@@ -70,6 +70,8 @@ public:
 
     virtual std::string bindingDirectory() const;
     virtual bool setBindingDirectory(const std::string& path);
+    virtual void clearBindingDirectory();
+
     virtual std::string fileSuffix() const;
     virtual void setFileSuffix(const std::string& suffix);
 

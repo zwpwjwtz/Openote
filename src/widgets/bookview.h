@@ -21,7 +21,9 @@ public:
     bool loadBook(const QString& path);
     bool loadDefaultBook();
     bool saveBook(const QString& path = "");
+
     QString currentPath() const;
+    void setPath(const QString& newPath);
 
     bool modified() const;
 
@@ -64,6 +66,7 @@ private:
 
 private slots:
     void onDialogColumnAddFinished(int result);
+    void onTableDataChanged();
 };
 
 #endif // BOOKVIEW_H

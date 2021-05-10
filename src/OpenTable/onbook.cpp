@@ -175,6 +175,13 @@ bool ONBook::setBindingDirectory(const std::string& path)
     return true;
 }
 
+void ONBook::clearBindingDirectory()
+{
+    d_ptr->bindingDirectory.clear();
+    for (size_t i=0; i<d_ptr->tableList.size(); i++)
+        d_ptr->tableList[i]->clearBindingDirectory();
+}
+
 bool ONBook::load()
 {
     if (d_ptr->bindingDirectory.empty())

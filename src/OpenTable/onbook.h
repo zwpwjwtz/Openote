@@ -33,6 +33,7 @@ public:
 
     std::string bindingDirectory() const;
     bool setBindingDirectory(const std::string& path);
+    void clearBindingDirectory();
 
     bool load();
     bool save();

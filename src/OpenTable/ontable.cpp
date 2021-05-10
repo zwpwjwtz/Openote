@@ -344,6 +344,11 @@ bool ONTable::setBindingDirectory(const std::string& path)
     return true;
 }
 
+void ONTable::clearBindingDirectory()
+{
+    d_ptr->bindingDirectory.clear();
+}
+
 std::string ONTable::fileSuffix() const
 {
     return d_ptr->fileSuffix;

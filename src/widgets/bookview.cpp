@@ -23,6 +23,7 @@ void BookView::clear()
 {
     QTabWidget::clear();
     book.clear();
+    book.setPath("");
     isModified = false;
 }
 
@@ -62,6 +63,9 @@ bool BookView::loadDefaultBook()
     QTableView* viewTable = new QTableView(this);
     viewTable->setModel(newTable);
     viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
+    connect(newTable, SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
+                                         const QVector<int>)),
+            this, SLOT(onTableDataChanged()));
     addTab(viewTable, newTableName);
     return true;
 }
@@ -81,6 +85,11 @@ bool BookView::saveBook(const QString& path)
 QString BookView::currentPath() const
 {
     return book.path();
+}
+
+void BookView::setPath(const QString &newPath)
+{
+    book.setPath(newPath);
 }
 
 bool BookView::modified() const
@@ -240,6 +249,9 @@ bool BookView::addTable()
     QTableView* viewTable = new QTableView(this);
     viewTable->setModel(newTable);
     viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
+    connect(newTable, SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
+                                         const QVector<int>)),
+            this, SLOT(onTableDataChanged()));
     addTab(viewTable, newName);
     setCurrentWidget(viewTable);
 
@@ -294,6 +306,9 @@ bool BookView::duplicateTable()
     QTableView* viewTable = new QTableView(this);
     viewTable->setModel(newTable);
     viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
+    connect(newTable, SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
+                                         const QVector<int>)),
+            this, SLOT(onTableDataChanged()));
     addTab(viewTable, newName);
 
     isModified = true;
@@ -427,5 +442,10 @@ void BookView::onDialogColumnAddFinished(int result)
         }
     }
 
+    isModified = true;
+}
+
+void BookView::onTableDataChanged()
+{
     isModified = true;
 }
