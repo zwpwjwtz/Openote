@@ -74,6 +74,16 @@ int TableModel::columnCount(const QModelIndex& parent) const
     return countColumn();
 }
 
+int TableModel::rowID(int row) const
+{
+    return d->getRowID(row);
+}
+
+int TableModel::columnID(int column) const
+{
+    return d->columnIDList[column];
+}
+
 QVariant TableModel::data(const QModelIndex& index, int role) const
 {
     if (!(index.isValid() &&
@@ -84,6 +94,8 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
     {
         if (role == Qt::DisplayRole)
             return referenceData(index.row(), index.column());
+        else if (role = Qt::EditRole)
+            return nativeData(index.row(), index.column());
         else
             return QVariant(); // TODO: use customized widgets to edit references
     }
@@ -147,8 +159,11 @@ QString TableModel::referenceData(int rowIndex, int columnIndex) const
         return targetValue;
     int targetColumnID = targetTable->d->columnIDList[0];
     for (auto i=referredRowIDs.cbegin(); i!=referredRowIDs.cend(); i++)
-    switch (targetTable->d->columnTypeIDList[0])
     {
+         if (i != referredRowIDs.cbegin())
+             targetValue.append('|');
+        switch (targetTable->d->columnTypeIDList[0])
+        {
         case ColumnType::Integer:
             targetValue.append(QString::number(
                                targetTable->readInt(*i, targetColumnID)));
@@ -165,10 +180,11 @@ QString TableModel::referenceData(int rowIndex, int columnIndex) const
         {
             auto rawList = targetTable->readIntList(*i, targetColumnID);
             for (auto j=rawList.cbegin(); j!=rawList.cend(); j++)
-                targetValue.append(QString::number(*j));
+                targetValue.append(',').append(QString::number(*j));
             break;
         }
         default:;
+        }
     }
     return targetValue;
 }
@@ -201,10 +217,20 @@ bool TableModel::setData(const QModelIndex& index,
         }
         case ColumnType::IntegerList:
         {
-            QStringList strings = value.toStringList();
+            int i;
+            QList<QVariant> valueList = value.toList();
+            if (valueList.isEmpty())
+            {
+                QStringList strings = value.toString().split(',');
+                for (i=0; i<strings.count(); i++)
+                    valueList.push_back(strings[i].toInt());
+            }
+
+            int length = valueList.length();
             std::vector<int> integers;
-            for (int i=0; i<strings.count(); i++)
-                integers.push_back(strings[i].toInt());
+            integers.reserve(length);
+            for (i=0; i<length; i++)
+                integers.push_back(valueList[i].toInt());
             if (readIntList(rowID, columnID) != integers)
                 successful = modify(rowID, columnID, integers);
             break;

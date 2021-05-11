@@ -3,6 +3,7 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include "bookview.h"
+#include "columnreferencedelegate.h"
 #include "models/tablemodel.h"
 #include <dialogs/dialogcolumnadd.h>
 
@@ -12,6 +13,8 @@
 BookView::BookView(QWidget *parent) : QTabWidget(parent)
 {
     dialogColumnAdd = nullptr;
+    referenceDelegate = new ColumnReferenceDelegate();
+    referenceDelegate->book = &book;
 
     setDocumentMode(true);
     setTabPosition(TabPosition::South);
@@ -41,7 +44,12 @@ bool BookView::loadBook(const QString& path)
         // Bind the model with a view
         QTableView* viewTable = new QTableView(this);
         viewTable->setModel(book.table(*i));
+        viewTable->setItemDelegate(referenceDelegate);
         viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, *i);
+        connect(book.table(*i),
+                SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
+                                   const QVector<int>)),
+                this, SLOT(onTableDataChanged()));
         addTab(viewTable, book.tableName(*i));
     }
 
@@ -62,6 +70,7 @@ bool BookView::loadDefaultBook()
     newTable->newRow();
     QTableView* viewTable = new QTableView(this);
     viewTable->setModel(newTable);
+    viewTable->setItemDelegate(referenceDelegate);
     viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
     connect(newTable, SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
                                          const QVector<int>)),
@@ -248,6 +257,7 @@ bool BookView::addTable()
     TableModel* newTable = book.addTable(newName);
     QTableView* viewTable = new QTableView(this);
     viewTable->setModel(newTable);
+    viewTable->setItemDelegate(referenceDelegate);
     viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
     connect(newTable, SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
                                          const QVector<int>)),
@@ -305,6 +315,7 @@ bool BookView::duplicateTable()
 
     QTableView* viewTable = new QTableView(this);
     viewTable->setModel(newTable);
+    viewTable->setItemDelegate(referenceDelegate);
     viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
     connect(newTable, SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
                                          const QVector<int>)),

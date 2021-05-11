@@ -41,7 +41,8 @@ SOURCES += \
     dialogs/dialogcolumnadd.cpp \
     OpenTable/ontableintlistcolumn.cpp \
     models/tablemodel.cpp \
-    models/bookmodel.cpp
+    models/bookmodel.cpp \
+    widgets/columnreferencedelegate.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -62,7 +63,8 @@ HEADERS += \
     models/tablemodel.h \
     models/bookmodel.h \
     models/bookmodel_p.h \
-    models/tablemodel_p.h
+    models/tablemodel_p.h \
+    widgets/columnreferencedelegate.h
 
 FORMS += \
     mainwindow.ui \

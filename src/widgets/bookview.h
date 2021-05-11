@@ -10,6 +10,7 @@ class QTableView;
 class QHeaderView;
 class DialogColumnAdd;
 class BookModel;
+class ColumnReferenceDelegate;
 
 class BookView : public QTabWidget
 {
@@ -56,6 +57,7 @@ private:
     DialogColumnAdd* dialogColumnAdd;
     bool isModified;
     BookIndex currentBookIndex;
+    ColumnReferenceDelegate* referenceDelegate;
 
     int getTableID(int tableIndex) const;
     int getTableIndex(int tableID) const;

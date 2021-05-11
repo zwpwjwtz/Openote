@@ -104,8 +104,8 @@ TableModel* BookModel::duplicateTable(int tableID, const QString& newName)
                                i->second));
         }
     }
-    connect(newTable, SIGNAL(columnAdded(int, int)),
-            this, SLOT(onTableColumnAdded(int, int)));
+    connect(newTable, SIGNAL(columnAdded(int, int, int)),
+            this, SLOT(onTableColumnAdded(int, int, int)));
     connect(newTable, SIGNAL(columnRemoved(int, int)),
             this, SLOT(onTableColumnRemoved(int, int)));
 
@@ -165,12 +165,23 @@ bool BookModel::load()
     if (!ONBook::load())
         return false;
 
+    // Listen to tables' events
+    for (auto j=d->tableList.cbegin(); j!=d->tableList.cend(); j++)
+    {
+        connect(*j, SIGNAL(columnAdded(int, int, int)),
+                this, SLOT(onTableColumnAdded(int, int, int)));
+        connect(*j, SIGNAL(columnRemoved(int, int)),
+                this, SLOT(onTableColumnRemoved(int, int)));
+    }
+
     // Notify all TableModel with column reference IDs
     TableModel* table = nullptr;
     for (auto i=d->columnReference.cbegin(); i!=d->columnReference.cend(); i++)
     {
         if (table == nullptr || table->ID != i->first.first)
+        {
             table = d->tableList[d->getTableIndexByID(i->first.first)];
+        }
         table->setColumnReference(i->first.second, i->second);
     }
     return true;
