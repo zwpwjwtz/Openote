@@ -43,7 +43,9 @@ SOURCES += \
     models/tablemodel.cpp \
     models/bookmodel.cpp \
     widgets/columnreferencedelegate.cpp \
-    widgets/columnreferenceselector.cpp
+    widgets/columnreferenceselector.cpp \
+    widgets/bookcontextmenu.cpp \
+    widgets/bookactiondispatcher.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -66,7 +68,9 @@ HEADERS += \
     models/bookmodel_p.h \
     models/tablemodel_p.h \
     widgets/columnreferencedelegate.h \
-    widgets/columnreferenceselector.h
+    widgets/columnreferenceselector.h \
+    widgets/bookcontextmenu.h \
+    widgets/bookactiondispatcher.h
 
 FORMS += \
     mainwindow.ui \

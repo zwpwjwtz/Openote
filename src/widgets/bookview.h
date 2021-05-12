@@ -8,9 +8,11 @@
 
 class QTableView;
 class QHeaderView;
-class DialogColumnAdd;
 class BookModel;
 class ColumnReferenceDelegate;
+class DialogColumnAdd;
+class BookContextMenu;
+class BookActionDispatcher;
 
 class BookView : public QTabWidget
 {
@@ -43,6 +45,9 @@ public slots:
     bool duplicateTable();
     bool renameTable();
 
+protected:
+    void mousePressEvent(QMouseEvent* event);
+
 private:
     struct BookIndex
     {
@@ -58,10 +63,15 @@ private:
     bool isModified;
     BookIndex currentBookIndex;
     ColumnReferenceDelegate* referenceDelegate;
+    BookContextMenu* contextMenu;
+    BookActionDispatcher* actionDispatcher;
 
     int getTableID(int tableIndex) const;
     int getTableIndex(int tableID) const;
     BookIndex getCurrentIndex() const;
+
+    void bindTableModel(const TableModel* model);
+    void bindTableView(QTableView* table);
 
     QString columnHeader(int tableIndex, int columnIndex) const;
     bool setColumnHeader(const QString& text, int tableIndex, int columnIndex);
@@ -69,6 +79,8 @@ private:
 private slots:
     void onDialogColumnAddFinished(int result);
     void onTableDataChanged();
+    void onColumnHeaderDoubleClicked(int index);
+    void onTabBarDoubleClicked(int index);
 };
 
 #endif // BOOKVIEW_H

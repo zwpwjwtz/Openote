@@ -1,11 +1,15 @@
+#include <QApplication>
 #include <QTableView>
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QMouseEvent>
 #include "bookview.h"
 #include "columnreferencedelegate.h"
+#include "bookcontextmenu.h"
+#include "bookactiondispatcher.h"
 #include "models/tablemodel.h"
-#include <dialogs/dialogcolumnadd.h>
+#include "dialogs/dialogcolumnadd.h"
 
 #define OPENOTE_BOOKVIEW_PROP_TABLE_ID    "table-id"
 
@@ -15,11 +19,48 @@ BookView::BookView(QWidget *parent) : QTabWidget(parent)
     dialogColumnAdd = nullptr;
     referenceDelegate = new ColumnReferenceDelegate();
     referenceDelegate->book = &book;
+    contextMenu = new BookContextMenu(this);
+    actionDispatcher = new BookActionDispatcher(this);
+    actionDispatcher->setView(this);
+    actionDispatcher->setMenu(contextMenu);
+
+    connect(tabBar(), SIGNAL(tabBarDoubleClicked(int)),
+            this, SLOT(onTabBarDoubleClicked(int)));
 
     setDocumentMode(true);
     setTabPosition(TabPosition::South);
 
     clear();
+}
+
+void BookView::mousePressEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::RightButton &&
+        !event->flags().testFlag(Qt::MouseEventCreatedDoubleClick))
+    {
+        // Show context menu
+        QWidget* widget = QApplication::widgetAt(mapToGlobal(event->pos()));
+        if (widget == tabBar())
+        {
+            contextMenu->setTableIsActive(
+                        tabBar()->tabAt(event->pos() - tabBar()->pos()) >= 0);
+            contextMenu->showTableMenu();
+        }
+        else
+        {
+            for (int i=0; i<count(); i++)
+            {
+                if (widget == this->widget(i))
+                {
+                    QTableView* table = dynamic_cast<QTableView*>(widget);
+                    contextMenu->setGridIsActive(
+                                        table->currentIndex().isValid());
+                    contextMenu->showGridMenu();
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void BookView::clear()
@@ -44,12 +85,7 @@ bool BookView::loadBook(const QString& path)
         // Bind the model with a view
         QTableView* viewTable = new QTableView(this);
         viewTable->setModel(book.table(*i));
-        viewTable->setItemDelegate(referenceDelegate);
-        viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, *i);
-        connect(book.table(*i),
-                SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
-                                   const QVector<int>)),
-                this, SLOT(onTableDataChanged()));
+        bindTableView(viewTable);
         addTab(viewTable, book.tableName(*i));
     }
 
@@ -65,16 +101,13 @@ bool BookView::loadDefaultBook()
     TableModel* newTable = book.addTable(newTableName);
     if (newTable == nullptr)
         return false;
-
+    bindTableModel(newTable);
     newTable->newColumn("New Column", TableModel::ColumnType::String);
     newTable->newRow();
+
     QTableView* viewTable = new QTableView(this);
     viewTable->setModel(newTable);
-    viewTable->setItemDelegate(referenceDelegate);
-    viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
-    connect(newTable, SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
-                                         const QVector<int>)),
-            this, SLOT(onTableDataChanged()));
+    bindTableView(viewTable);
     addTab(viewTable, newTableName);
     return true;
 }
@@ -255,13 +288,11 @@ bool BookView::addTable()
         return false;
 
     TableModel* newTable = book.addTable(newName);
+    bindTableModel(newTable);
+
     QTableView* viewTable = new QTableView(this);
     viewTable->setModel(newTable);
-    viewTable->setItemDelegate(referenceDelegate);
-    viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
-    connect(newTable, SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
-                                         const QVector<int>)),
-            this, SLOT(onTableDataChanged()));
+    bindTableView(viewTable);
     addTab(viewTable, newName);
     setCurrentWidget(viewTable);
 
@@ -312,15 +343,13 @@ bool BookView::duplicateTable()
     TableModel* newTable = book.duplicateTable(oldTableID, newName);
     if (newTable == nullptr)
         return false;
+    bindTableModel(newTable);
 
     QTableView* viewTable = new QTableView(this);
     viewTable->setModel(newTable);
-    viewTable->setItemDelegate(referenceDelegate);
-    viewTable->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, newTable->ID);
-    connect(newTable, SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
-                                         const QVector<int>)),
-            this, SLOT(onTableDataChanged()));
+    bindTableView(viewTable);
     addTab(viewTable, newName);
+    setCurrentWidget(viewTable);
 
     isModified = true;
     return true;
@@ -335,7 +364,7 @@ bool BookView::renameTable()
     int tableID = getTableID(index.table);
     QString oldName = book.tableName(tableID);
     QString newName = QInputDialog::getText(this, "Rename a table",
-                                            "New name for the column:",
+                                            "New name for the table:",
                                             QLineEdit::Normal,
                                             oldName);
     newName.replace("\n", "");
@@ -384,6 +413,26 @@ BookView::BookIndex BookView::getCurrentIndex() const
     bookIndex.column = modelIndex.column();
     bookIndex.row = modelIndex.row();
     return bookIndex;
+}
+
+void BookView::bindTableView(QTableView* table)
+{
+    TableModel* model = dynamic_cast<TableModel*>(table->model());
+    if (!model)
+        return;
+
+    table->setProperty(OPENOTE_BOOKVIEW_PROP_TABLE_ID, model->ID);
+    table->setItemDelegate(referenceDelegate);
+
+    connect(table->horizontalHeader(), SIGNAL(sectionDoubleClicked(int)),
+            this, SLOT(onColumnHeaderDoubleClicked(int)));
+}
+
+void BookView::bindTableModel(const TableModel* model)
+{
+    connect(model, SIGNAL(dataChanged(const QModelIndex, const QModelIndex,
+                                         const QVector<int>)),
+            this, SLOT(onTableDataChanged()));
 }
 
 QString BookView::columnHeader(int tableIndex, int columnIndex) const
@@ -459,4 +508,20 @@ void BookView::onDialogColumnAddFinished(int result)
 void BookView::onTableDataChanged()
 {
     isModified = true;
+}
+
+void BookView::onColumnHeaderDoubleClicked(int index)
+{
+    if (index >= 0)
+        renameColumn();
+    else
+        addColumn();
+}
+
+void BookView::onTabBarDoubleClicked(int index)
+{
+    if (index >= 0)
+        renameTable();
+    else
+        addTable();
 }
