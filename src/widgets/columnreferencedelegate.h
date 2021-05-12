@@ -5,7 +5,7 @@
 
 
 class BookModel;
-class QStandardItemModel;
+class ColumnReferenceSelector;
 
 class ColumnReferenceDelegate : public QItemDelegate
 {
@@ -13,9 +13,6 @@ public:
     BookModel* book;
 
     ColumnReferenceDelegate();
-
-    QSize sizeHint(const QStyleOptionViewItem& option,
-                   const QModelIndex& index) const;
 
     virtual QWidget* createEditor(QWidget *parent,
                                   const QStyleOptionViewItem& option,
@@ -26,8 +23,9 @@ public:
                               QAbstractItemModel* model,
                               const QModelIndex& index) const;
 
-private:
-    QStandardItemModel* listModel;
+private slots:
+    void onEditorAddingItemRequested(ColumnReferenceSelector* editor,
+                                     QString text);
 };
 
 #endif // COLUMNREFERENCEDELEGATE_H

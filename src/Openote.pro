@@ -42,7 +42,8 @@ SOURCES += \
     OpenTable/ontableintlistcolumn.cpp \
     models/tablemodel.cpp \
     models/bookmodel.cpp \
-    widgets/columnreferencedelegate.cpp
+    widgets/columnreferencedelegate.cpp \
+    widgets/columnreferenceselector.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -64,12 +65,14 @@ HEADERS += \
     models/bookmodel.h \
     models/bookmodel_p.h \
     models/tablemodel_p.h \
-    widgets/columnreferencedelegate.h
+    widgets/columnreferencedelegate.h \
+    widgets/columnreferenceselector.h
 
 FORMS += \
     mainwindow.ui \
     dialogs/dialogabout.ui \
-    dialogs/dialogcolumnadd.ui
+    dialogs/dialogcolumnadd.ui \
+    widgets/columnreferenceselector.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

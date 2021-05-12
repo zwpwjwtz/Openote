@@ -137,8 +137,8 @@ bool BookModel::removeTable(int tableID)
     return true;
 }
 
-const TableModel* BookModel::columnReferenceTable(int sourceTableID,
-                                                  int sourceColumnID)
+TableModel*
+BookModel::columnReferenceTable(int sourceTableID, int sourceColumnID)
 {
     int targetTableID = ONBook::columnReference(sourceTableID, sourceColumnID);
     if (targetTableID > 0)

@@ -94,7 +94,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
     {
         if (role == Qt::DisplayRole)
             return referenceData(index.row(), index.column());
-        else if (role = Qt::EditRole)
+        else if (role == Qt::EditRole)
             return nativeData(index.row(), index.column());
         else
             return QVariant(); // TODO: use customized widgets to edit references
@@ -118,8 +118,7 @@ QVariant TableModel::nativeData(int rowIndex, int columnIndex) const
         case ColumnType::IntegerList:
         {
             auto rawList = readIntList(rowID, columnID);
-            return QVariant::fromValue<QVector<int>>(
-                        QVector<int>(rawList.cbegin(), rawList.cend()));
+            return QList<QVariant>(rawList.cbegin(), rawList.cend());
         }
         default:
             return QVariant();

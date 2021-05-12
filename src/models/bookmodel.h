@@ -28,8 +28,7 @@ public:
     TableModel* duplicateTable(int tableID, const QString& newName);
     bool removeTable(int tableID);
 
-    const TableModel* columnReferenceTable(int sourceTableID,
-                                           int sourceColumnID);
+    TableModel* columnReferenceTable(int sourceTableID, int sourceColumnID);
 
     QString path() const;
     bool setPath(const QString& path);
