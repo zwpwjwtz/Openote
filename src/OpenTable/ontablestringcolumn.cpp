@@ -127,6 +127,9 @@ bool ONTableStringColumn::load()
     char* pos, *pos2, *posE;
     char* buffer = new char[ONTABLE_COLUMN_STRING_BUFFER_LEN];
     FILE* f = fopen(d_ptr->bindingFile, "rb");
+    if (!f)
+        return false;
+
     while (true)
     {
         // TODO: use d_ptr->recordDelimiter to define the read boundary

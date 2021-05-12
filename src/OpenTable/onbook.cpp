@@ -406,6 +406,7 @@ bool ONBookPrivate::addColumnReferences(int targetTableID,
 
         columnReference.insert(std::make_pair(std::make_pair(tableID, columnID),
                                               targetTableID));
+        pos2 = pos1 + 1;
     }
     return true;
 }

@@ -125,6 +125,9 @@ bool ONTableDoubleColumn::load()
     char* pos, *pos2;
     char buffer[ONTABLE_COLUMN_DOUBLE_BUFFER_LEN];
     FILE* f = fopen(d_ptr->bindingFile, "rb");
+    if (!f)
+        return false;
+
     while (true)
     {
         if (fgets(buffer, ONTABLE_COLUMN_DOUBLE_BUFFER_LEN, f) != buffer)
