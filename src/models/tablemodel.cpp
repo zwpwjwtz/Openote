@@ -118,7 +118,11 @@ QVariant TableModel::nativeData(int rowIndex, int columnIndex) const
         case ColumnType::IntegerList:
         {
             auto rawList = readIntList(rowID, columnID);
-            return QList<QVariant>(rawList.cbegin(), rawList.cend());
+            QList<QVariant> valueList;
+            valueList.reserve(rawList.size());
+            for (auto i=rawList.cbegin(); i!=rawList.cend(); i++)
+                valueList.push_back(*i);
+            return valueList;
         }
         default:
             return QVariant();

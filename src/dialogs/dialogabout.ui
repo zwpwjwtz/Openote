@@ -14,7 +14,7 @@
    <string>Dialog</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="reources.qrc">
+   <iconset resource="../reources.qrc">
     <normaloff>:/icons/Openote.png</normaloff>:/icons/Openote.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -38,7 +38,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="reources.qrc">:/icons/Openote.png</pixmap>
+        <pixmap resource="../reources.qrc">:/icons/Openote.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -111,7 +111,7 @@
        <item>
         <widget class="QLabel" name="labelProjectURL">
          <property name="text">
-          <string>&lt;p&gt;Project Home: &lt;a href=\&quot;https://github.com/zwpwjwtz/Openote\&quot;&gt;Github&lt;/a&gt;&lt;/p&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Project Home: &lt;a href=&quot;https://github.com/zwpwjwtz/Openote&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0082fa;&quot;&gt;Github&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="textFormat">
           <enum>Qt::RichText</enum>
@@ -119,8 +119,14 @@
          <property name="alignment">
           <set>Qt::AlignCenter</set>
          </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
          <property name="openExternalLinks">
           <bool>true</bool>
+         </property>
+         <property name="textInteractionFlags">
+          <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse|Qt::TextBrowserInteraction|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
          </property>
         </widget>
        </item>
@@ -151,7 +157,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="reources.qrc"/>
+  <include location="../reources.qrc"/>
  </resources>
  <connections>
   <connection>

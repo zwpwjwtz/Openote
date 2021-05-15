@@ -44,7 +44,11 @@ bool utils_newDirectory(const char* path)
         if (errno == ENOENT)
         {
             // The path does not exist; create it
+#ifdef WIN32
+            mkdir(path);
+#else
             mkdir(path, S_IRWXU);
+#endif
             return true;
         }
         else

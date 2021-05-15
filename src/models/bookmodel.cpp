@@ -38,9 +38,12 @@ int BookModel::tableCount() const
 
 QList<int> BookModel::tableIDs() const
 {
-    QList<int> IDList;
     auto stdList = ONBook::tableIDs();
-    return QList<int>(stdList.cbegin(), stdList.cend());
+    QList<int> IDList;
+    IDList.reserve(stdList.size());
+    for (auto i=stdList.cbegin(); i!=stdList.cend(); i++)
+        IDList.push_back(*i);
+    return IDList;
 }
 
 QString BookModel::tableName(int tableID) const

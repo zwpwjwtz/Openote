@@ -127,8 +127,11 @@ void ColumnReferenceDelegate::setModelData(QWidget* editor,
     QList<int> selectedIDs = listEditor->checkedIDs();
 
     // Update the model
-    table->setData(index,
-                   QVariantList(selectedIDs.cbegin(), selectedIDs.cend()));
+    QList<QVariant> valueList;
+    valueList.reserve(selectedIDs.size());
+    for (auto i=selectedIDs.cbegin(); i!=selectedIDs.cend(); i++)
+        valueList.push_back(*i);
+    table->setData(index, valueList);
     return;
 }
 

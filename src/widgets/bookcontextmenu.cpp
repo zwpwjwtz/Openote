@@ -149,14 +149,14 @@ void BookContextMenu::onItemClicked(QAction* action)
 
 void BookContextMenu::addAction(QMenu* menu, QString text, int actionID)
 {
-    QAction* newAction = new QAction(text);
+    QAction* newAction = new QAction(text, this);
     newAction->setData(actionID);
     menu->addAction(newAction);
 }
 
 void BookContextMenu::addSeparator(QMenu* menu)
 {
-    QAction* newAction = new QAction();
+    QAction* newAction = new QAction(this);
     newAction->setSeparator(true);
     menu->addAction(newAction);
 }
