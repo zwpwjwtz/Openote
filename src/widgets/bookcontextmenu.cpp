@@ -36,13 +36,13 @@ void BookContextMenu::showTableMenu(QPoint pos)
 
     QMenu* menu = getMenu(MenuType::TableMenu);
     menu->clear();
-    addAction(menu, "New table", ActionType::Adding);
+    addAction(menu, tr("New table"), ActionType::Adding);
     if (hasActiveTable)
     {
-        addAction(menu, "Delete table", ActionType::Deleting);
-        addAction(menu, "Duplicate table", ActionType::Duplicating);
+        addAction(menu, tr("Delete table"), ActionType::Deleting);
+        addAction(menu, tr("Duplicate table"), ActionType::Duplicating);
         addSeparator(menu);
-        addAction(menu, "Rename table", ActionType::Renaming);
+        addAction(menu, tr("Rename table"), ActionType::Renaming);
     }
     menu->popup(pos);
 }
@@ -54,13 +54,13 @@ void BookContextMenu::showColumnMenu(QPoint pos)
 
     QMenu* menu = getMenu(MenuType::ColumnMenu);
     menu->clear();
-    addAction(menu, "New column", ActionType::Adding);
+    addAction(menu, tr("New column"), ActionType::Adding);
     if (hasActiveColumn)
     {
-        addAction(menu, "Delete column", ActionType::Deleting);
-        addAction(menu, "Duplicate column", ActionType::Duplicating);
+        addAction(menu, tr("Delete column"), ActionType::Deleting);
+        addAction(menu, tr("Duplicate column"), ActionType::Duplicating);
         addSeparator(menu);
-        addAction(menu, "Rename column", ActionType::Renaming);
+        addAction(menu, tr("Rename column"), ActionType::Renaming);
     }
     menu->popup(pos);
 }
@@ -72,11 +72,11 @@ void BookContextMenu::showRowMenu(QPoint pos)
 
     QMenu* menu = getMenu(MenuType::RowMenu);
     menu->clear();
-    addAction(menu, "New row", ActionType::Adding);
+    addAction(menu, tr("New row"), ActionType::Adding);
     if (hasActiveGrid)
     {
-        addAction(menu, "Delete row", ActionType::Deleting);
-        addAction(menu, "Duplicate row", ActionType::Duplicating);
+        addAction(menu, tr("Delete row"), ActionType::Deleting);
+        addAction(menu, tr("Duplicate row"), ActionType::Duplicating);
     }
     menu->popup(pos);
 }
@@ -88,11 +88,11 @@ void BookContextMenu::showGridMenu(QPoint pos)
 
     QMenu* menu = getMenu(MenuType::GridMenu);
     menu->clear();
-    addAction(menu, "New row", ActionType::AddingRow);
-    addAction(menu, "Delete row", ActionType::DeletingRow);
+    addAction(menu, tr("New row"), ActionType::AddingRow);
+    addAction(menu, tr("Delete row"), ActionType::DeletingRow);
     addSeparator(menu);
-    addAction(menu, "New column", ActionType::AddingColumn);
-    addAction(menu, "Delete column", ActionType::DeletingColumn);
+    addAction(menu, tr("New column"), ActionType::AddingColumn);
+    addAction(menu, tr("Delete column"), ActionType::DeletingColumn);
     menu->popup(pos);
 }
 

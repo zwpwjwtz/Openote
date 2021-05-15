@@ -208,10 +208,10 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
         default:;
     }
     if (!conversionOK)
-        QMessageBox::warning(editor, "Value format mismatch",
-                             "The input text cannot be convert to "
+        QMessageBox::warning(editor, tr("Value format mismatch"),
+                             tr("The input text cannot be convert to "
                              "value type of the referred column.\n"
-                             "Please try to add rows manually.");
+                             "Please try to add rows manually."));
     if (successful)
         editor->addItem(rowID, text);
 }

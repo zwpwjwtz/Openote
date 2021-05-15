@@ -58,6 +58,8 @@
     <addaction name="actionEditDelete"/>
     <addaction name="separator"/>
     <addaction name="actionEditFind"/>
+    <addaction name="separator"/>
+    <addaction name="actionEditPreference"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -172,22 +174,22 @@
   </action>
   <action name="actionTableAdd">
    <property name="text">
-    <string>Add Table</string>
+    <string>Add &amp;Table</string>
    </property>
   </action>
   <action name="actionTableDuplicate">
    <property name="text">
-    <string>Duplicate Table</string>
+    <string>Du&amp;plicate Table</string>
    </property>
   </action>
   <action name="actionTableDelete">
    <property name="text">
-    <string>Delete Table</string>
+    <string>Delete Ta&amp;ble</string>
    </property>
   </action>
   <action name="actionTableRename">
    <property name="text">
-    <string>Rename Table</string>
+    <string>Re&amp;name Table</string>
    </property>
   </action>
   <action name="actionRowAdd">
@@ -207,27 +209,32 @@
   </action>
   <action name="actionColumnAdd">
    <property name="text">
-    <string>Add Column</string>
+    <string>Add &amp;Column</string>
    </property>
   </action>
   <action name="actionColumnDelete">
    <property name="text">
-    <string>Delete Column</string>
+    <string>De&amp;lete Column</string>
    </property>
   </action>
   <action name="actionColumnDuplicate">
    <property name="text">
-    <string>Duplicate Column</string>
+    <string>D&amp;uplicate Column</string>
    </property>
   </action>
   <action name="actionColumnRename">
    <property name="text">
-    <string>Rename Column</string>
+    <string>&amp;Rename Column</string>
    </property>
   </action>
   <action name="actionRowRemove">
    <property name="text">
     <string>Rename Row</string>
+   </property>
+  </action>
+  <action name="actionEditPreference">
+   <property name="text">
+    <string>Preference</string>
    </property>
   </action>
  </widget>

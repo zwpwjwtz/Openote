@@ -97,12 +97,13 @@ bool BookView::loadDefaultBook()
     clear();
 
     // Add an empty table
-    QString newTableName("Table1");
+    QString newTableName(tr("Table1"));
     TableModel* newTable = book.addTable(newTableName);
     if (newTable == nullptr)
         return false;
     bindTableModel(newTable);
-    newTable->newColumn("New Column", TableModel::ColumnType::String);
+    newTable->newColumn(tr("New Column").toStdString(),
+                        TableModel::ColumnType::String);
     newTable->newRow();
 
     QTableView* viewTable = new QTableView(this);
@@ -187,8 +188,8 @@ bool BookView::duplicateColumn()
         return false;
 
     QString oldName = columnHeader(index.table, index.column);
-    QString newName = QInputDialog::getText(this, "Duplicate a column",
-                                            "New column name:",
+    QString newName = QInputDialog::getText(this, tr("Duplicate a column"),
+                                            tr("New column name:"),
                                             QLineEdit::Normal,
                                             oldName);
     if (newName.isEmpty())
@@ -212,8 +213,8 @@ bool BookView::renameColumn()
         return false;
 
     QString oldName = columnHeader(index.table, index.column);
-    QString newName = QInputDialog::getText(this, "Rename a column",
-                                            "New name for the column:",
+    QString newName = QInputDialog::getText(this, tr("Rename a column"),
+                                            tr("New name for the column:"),
                                             QLineEdit::Normal,
                                             oldName);
     newName.replace("\n", "");
@@ -239,8 +240,8 @@ bool BookView::addRow()
     TableModel* table = book.table(getTableID(index.table));
     if (table->countColumn() == 0)
     {
-        QMessageBox::warning(this, "No column presents",
-                             "Please add a column before adding rows.");
+        QMessageBox::warning(this, tr("No column presents"),
+                             tr("Please add a column before adding rows."));
         return false;
     }
     table->newRow();
@@ -280,10 +281,10 @@ bool BookView::duplicateRow()
 
 bool BookView::addTable()
 {
-    QString newName = QInputDialog::getText(this, "Add a table",
-                                            "Table name:",
+    QString newName = QInputDialog::getText(this, tr("Add a table"),
+                                            tr("Table name:"),
                                             QLineEdit::Normal,
-                                            "NewTable");
+                                            tr("NewTable"));
     if (newName.isEmpty())
         return false;
 
@@ -307,8 +308,8 @@ bool BookView::deleteTable()
         return false;
 
     int tableID = getTableID(index.table);
-    if (QMessageBox::warning(this, "Delete a table",
-                             QString("Are you sure to delete table %1 ?")
+    if (QMessageBox::warning(this, tr("Delete a table"),
+                             QString(tr("Are you sure to delete table %1 ?"))
                                     .arg(book.tableName(tableID)),
                              QMessageBox::Yes | QMessageBox::No)
             != QMessageBox::Yes)
@@ -332,8 +333,8 @@ bool BookView::duplicateTable()
 
     int oldTableID = getTableID(index.table);
     QString oldName = book.tableName(oldTableID);
-    QString newName = QInputDialog::getText(this, "Duplicate a table",
-                                            "New table name:",
+    QString newName = QInputDialog::getText(this, tr("Duplicate a table"),
+                                            tr("New table name:"),
                                             QLineEdit::Normal,
                                             QString(oldName).append("Copy"));
     if (newName.isEmpty())
@@ -363,8 +364,8 @@ bool BookView::renameTable()
 
     int tableID = getTableID(index.table);
     QString oldName = book.tableName(tableID);
-    QString newName = QInputDialog::getText(this, "Rename a table",
-                                            "New name for the table:",
+    QString newName = QInputDialog::getText(this, tr("Rename a table"),
+                                            tr("New name for the table:"),
                                             QLineEdit::Normal,
                                             oldName);
     newName.replace("\n", "");
@@ -462,10 +463,10 @@ void BookView::onDialogColumnAddFinished(int result)
         referenceTableID = tableIDs[dialogColumnAdd->referenceIndex];
         if (referenceTableID == tableID)
         {
-            QMessageBox::warning(this, "Failed creating column",
-                                 "Creating a column referring to its "
+            QMessageBox::warning(this, tr("Failed creating column"),
+                                 tr("Creating a column referring to its "
                                  "parent table is not allowed. \n"
-                                 "Please select another reference table.");
+                                 "Please select another reference table."));
             dialogColumnAdd->open();
             return;
         }
@@ -479,9 +480,9 @@ void BookView::onDialogColumnAddFinished(int result)
                              TableModel::ColumnType::IntegerList,
                              referenceTableID) <= 0)
         {
-            QMessageBox::critical(this, "Failed creating column",
-                                  "An error occurred when creating a column "
-                                  "referring to another table.");
+            QMessageBox::critical(this, tr("Failed creating column"),
+                                  tr("An error occurred when creating a column "
+                                  "referring to another table."));
             return;
         }
     }

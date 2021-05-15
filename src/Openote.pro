@@ -45,7 +45,9 @@ SOURCES += \
     widgets/columnreferencedelegate.cpp \
     widgets/columnreferenceselector.cpp \
     widgets/bookcontextmenu.cpp \
-    widgets/bookactiondispatcher.cpp
+    widgets/bookactiondispatcher.cpp \
+    dialogs/dialogpreference.cpp \
+    global.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -70,13 +72,16 @@ HEADERS += \
     widgets/columnreferencedelegate.h \
     widgets/columnreferenceselector.h \
     widgets/bookcontextmenu.h \
-    widgets/bookactiondispatcher.h
+    widgets/bookactiondispatcher.h \
+    dialogs/dialogpreference.h \
+    global.h
 
 FORMS += \
     mainwindow.ui \
     dialogs/dialogabout.ui \
     dialogs/dialogcolumnadd.ui \
-    widgets/columnreferenceselector.ui
+    widgets/columnreferenceselector.ui \
+    dialogs/dialogpreference.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -84,4 +89,10 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \
-    reources.qrc
+    reources.qrc \
+    translations.qrc
+
+TRANSLATIONS += \
+    translations/Openote_zh_CN.ts
+
+include(translation.pri)

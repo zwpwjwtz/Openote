@@ -5,6 +5,7 @@
 
 
 class DialogAbout;
+class DialogPreference;
 class BookView;
 
 namespace Ui {
@@ -26,6 +27,7 @@ protected:
 private:
     Ui::MainWindow *ui;
     DialogAbout* windowAbout;
+    DialogPreference* windowPreference;
     BookView* bookWidget;
     QString lastDirectory;
 
@@ -39,6 +41,7 @@ private slots:
     void on_actionFileSaveAs_triggered();
     void on_actionFileExit_triggered();
     void on_actionHelpAbout_triggered();
+    void on_actionEditPreference_triggered();
 };
 
 #endif // MAINWINDOW_H

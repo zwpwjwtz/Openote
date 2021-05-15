@@ -5,6 +5,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "dialogs/dialogabout.h"
+#include "dialogs/dialogpreference.h"
 #include "widgets/bookview.h"
 
 
@@ -15,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     windowAbout = nullptr;
+    windowPreference = nullptr;
     bookWidget = new BookView(this);
     ui->centralWidget->layout()->addWidget(bookWidget);
 
@@ -54,6 +56,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::changeEvent(QEvent* event)
 {
+    QMainWindow::changeEvent(event);
     if (event->type() == QEvent::LanguageChange)
         ui->retranslateUi(this);
 }
@@ -182,4 +185,11 @@ void MainWindow::on_actionHelpAbout_triggered()
     if (!windowAbout)
         windowAbout = new DialogAbout(this);
     windowAbout->show();
+}
+
+void MainWindow::on_actionEditPreference_triggered()
+{
+    if (!windowPreference)
+        windowPreference = new DialogPreference(this);
+    windowPreference->show();
 }
