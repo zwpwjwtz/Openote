@@ -89,10 +89,11 @@ void BookContextMenu::showGridMenu(QPoint pos)
     QMenu* menu = getMenu(MenuType::GridMenu);
     menu->clear();
     addAction(menu, tr("New row"), ActionType::AddingRow);
-    addAction(menu, tr("Delete row"), ActionType::DeletingRow);
-    addSeparator(menu);
-    addAction(menu, tr("New column"), ActionType::AddingColumn);
-    addAction(menu, tr("Delete column"), ActionType::DeletingColumn);
+    if (hasActiveGrid)
+    {
+        addAction(menu, tr("Delete row"), ActionType::DeletingRow);
+        addAction(menu, tr("Duplicate row"), ActionType::DuplicatingRow);
+    }
     menu->popup(pos);
 }
 
@@ -135,7 +136,8 @@ void BookContextMenu::onItemClicked(QAction* action)
     int i;
     for (i=0; i<menuList.count(); i++)
     {
-        if (menuList[i]->actions().contains(action))
+        if (menuList[i] != nullptr &&
+            menuList[i]->actions().contains(action))
             break;
     }
     if (i >= menuList.count())

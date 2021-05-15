@@ -32,7 +32,9 @@ public:
         AddingColumn = 5,
         AddingRow = 6,
         DeletingColumn = 7,
-        DeletingRow = 8
+        DeletingRow = 8,
+        DuplicatingColumn = 9,
+        DuplicatingRow = 10
     };
 
     explicit BookContextMenu(QObject* parent = nullptr);

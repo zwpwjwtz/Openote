@@ -84,14 +84,12 @@ BookActionDispatcher::onContextMenuClicked(BookContextMenu::MenuType menu,
         case MenuType::GridMenu:
         switch (action)
         {
-            case ActionType::AddingColumn:
-                view->addColumn();    break;
-            case ActionType::DeletingColumn:
-                view->deleteColumn();    break;
             case ActionType::AddingRow:
                 view->addRow();    break;
             case ActionType::DeletingRow:
                 view->deleteRow();    break;
+            case ActionType::DuplicatingRow:
+                view->duplicateRow();    break;
             default:;
         }  break;
 

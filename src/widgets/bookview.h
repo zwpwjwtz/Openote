@@ -6,9 +6,8 @@
 #include "models/bookmodel.h"
 
 
-class QTableView;
-class QHeaderView;
 class BookModel;
+class TableView;
 class ColumnReferenceDelegate;
 class DialogColumnAdd;
 class BookContextMenu;
@@ -71,7 +70,7 @@ private:
     BookIndex getCurrentIndex() const;
 
     void bindTableModel(const TableModel* model);
-    void bindTableView(QTableView* table);
+    void bindTableView(TableView *table);
 
     QString columnHeader(int tableIndex, int columnIndex) const;
     bool setColumnHeader(const QString& text, int tableIndex, int columnIndex);
@@ -79,7 +78,9 @@ private:
 private slots:
     void onDialogColumnAddFinished(int result);
     void onTableDataChanged();
+    void onColumnHeaderRightClicked(int index);
     void onColumnHeaderDoubleClicked(int index);
+    void onGridRightClicked(int rowIndex, int columnIndex);
     void onTabBarDoubleClicked(int index);
 };
 

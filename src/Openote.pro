@@ -47,7 +47,9 @@ SOURCES += \
     widgets/bookcontextmenu.cpp \
     widgets/bookactiondispatcher.cpp \
     dialogs/dialogpreference.cpp \
-    global.cpp
+    global.cpp \
+    widgets/tableview.cpp \
+    widgets/columnheaderview.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -74,7 +76,9 @@ HEADERS += \
     widgets/bookcontextmenu.h \
     widgets/bookactiondispatcher.h \
     dialogs/dialogpreference.h \
-    global.h
+    global.h \
+    widgets/tableview.h \
+    widgets/columnheaderview.h
 
 FORMS += \
     mainwindow.ui \
