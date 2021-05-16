@@ -215,6 +215,37 @@ bool BookView::renameColumn()
         return false;
 }
 
+bool BookView::columnToTable()
+{
+    BookIndex index = currentBookIndex = getCurrentIndex();
+    if (index.table < 0 || index.column < 0)
+        return false;
+
+    TableModel* table = book.table(getTableID(index.table));
+    int columnID = table->columnID(index.column);
+    QString tableName =
+            QInputDialog::getText(this, tr("Convert a column to table"),
+                                  tr("New table name"),
+                                  QLineEdit::Normal,
+                                  QString::fromStdString(
+                                                  table->columnName(columnID)));
+    if (tableName.isEmpty())
+        return false;
+
+    TableModel* newTable =
+                    book.convertColumnToTable(table, columnID, tableName);
+    bindTableModel(newTable);
+
+    TableView* viewTable = new TableView(this);
+    viewTable->setModel(newTable);
+    bindTableView(viewTable);
+    addTab(viewTable, tableName);
+    setCurrentWidget(viewTable);
+
+    isModified = true;
+    return true;
+}
+
 bool BookView::addRow()
 {
     BookIndex index = currentBookIndex = getCurrentIndex();

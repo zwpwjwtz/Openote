@@ -111,6 +111,27 @@ void ONTable::clear()
     d_ptr->IDList.clear();
 }
 
+void ONTable::clearRow(int ID)
+{
+    std::list<int>::iterator pos = std::find(d_ptr->IDList.begin(),
+                                             d_ptr->IDList.end(),
+                                             ID);
+    if (pos == d_ptr->IDList.end())
+        return;
+    d_ptr->IDList.erase(pos);
+
+    std::vector<ONTableColumn*>& columns = d_ptr->columnList;
+    for (size_t i=0; i<columns.size(); i++)
+        columns[i]->remove(ID);
+}
+
+void ONTable::clearColumn(int columnID)
+{
+    int index = d_ptr->getColumnIndexByID(columnID);
+    if (index >= 0)
+        d_ptr->columnList[index]->clear();
+}
+
 int ONTable::newRow()
 {
     if (d_ptr->columnList.size() == 0)
@@ -168,6 +189,50 @@ ONTable::ColumnType ONTable::columnType(int columnID) const
         return ColumnType(d_ptr->columnTypeIDList[columnIndex]);
     else
         return ColumnType::None;
+}
+
+bool ONTable::setColumnType(int columnID, ColumnType newType)
+{
+    int columnIndex = d_ptr->getColumnIndexByID(columnID);
+    if (columnIndex < 0)
+        return false;
+
+    if (d_ptr->columnTypeIDList[columnIndex] == newType)
+        return true;
+
+    // Non-empty columns cannot have their type changed
+    // Users must clear them before doing changing
+    ONTableColumn* oldColumn = d_ptr->columnList[columnIndex];
+    if (oldColumn->length() > 0)
+        return false;
+
+    ONTableColumn* newColumn = nullptr;
+    switch (newType)
+    {
+        case ColumnType::Integer:
+            newColumn = new ONTableIntColumn;
+            break;
+        case ColumnType::Double:
+            newColumn = new ONTableDoubleColumn;
+            break;
+        case ColumnType::String:
+            newColumn = new ONTableStringColumn;
+            break;
+        case ColumnType::IntegerList:
+            newColumn = new ONTableIntListColumn;
+            break;
+        default:;
+    }
+
+    if (newColumn != nullptr)
+    {
+        newColumn->ID = columnID;
+        newColumn->typeID = newType;
+        delete oldColumn;
+        d_ptr->columnList[columnIndex] = newColumn;
+        d_ptr->columnTypeIDList[columnIndex] = newType;
+    }
+    return true;
 }
 
 ONTableDefaultValue ONTable::defaultValues() const
@@ -299,6 +364,92 @@ bool ONTable::modify(int ID, int columnID, const std::vector<int>& valueList)
                                                   valueList.data(),
                                                   valueList.size());
     return true;
+}
+
+std::list<int> ONTable::insert(int columnID, const std::list<int>& valueList)
+{
+    std::list<int> newIDList;
+    int columnIndex = d_ptr->getColumnIndexByID(columnID);
+#ifdef ONTABLE_COLUMN_TYPE_CHECK
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::Integer)
+        return newIDList;
+#endif
+    ONTableIntColumn* column =
+            dynamic_cast<ONTableIntColumn*>(d_ptr->columnList[columnIndex]);
+    std::list<int>::const_iterator i;
+    int newID;
+    for (i=valueList.cbegin(); i!= valueList.cend(); i++)
+    {
+        newID = newRow();
+        column->set(newID, *i);
+        newIDList.push_back(newID);
+    }
+    return newIDList;
+}
+
+std::list<int> ONTable::insert(int columnID, const std::list<double>& valueList)
+{
+    std::list<int> newIDList;
+    int columnIndex = d_ptr->getColumnIndexByID(columnID);
+#ifdef ONTABLE_COLUMN_TYPE_CHECK
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::Double)
+        return newIDList;
+#endif
+    ONTableDoubleColumn* column =
+            dynamic_cast<ONTableDoubleColumn*>(d_ptr->columnList[columnIndex]);
+    std::list<double>::const_iterator i;
+    int newID;
+    for (i=valueList.cbegin(); i!= valueList.cend(); i++)
+    {
+        newID = newRow();
+        column->set(newID, *i);
+        newIDList.push_back(newID);
+    }
+    return newIDList;
+}
+
+std::list<int> ONTable::insert(int columnID,
+                               const std::list<std::string>& valueList)
+{
+    std::list<int> newIDList;
+    int columnIndex = d_ptr->getColumnIndexByID(columnID);
+#ifdef ONTABLE_COLUMN_TYPE_CHECK
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::String)
+        return newIDList;
+#endif
+    ONTableStringColumn* column =
+            dynamic_cast<ONTableStringColumn*>(d_ptr->columnList[columnIndex]);
+    std::list<std::string>::const_iterator i;
+    int newID;
+    for (i=valueList.cbegin(); i!= valueList.cend(); i++)
+    {
+        newID = newRow();
+        column->set(newID, *i);
+        newIDList.push_back(newID);
+    }
+    return newIDList;
+}
+
+std::list<int> ONTable::insert(int columnID,
+                               const std::list<std::vector<int>>& valueList)
+{
+    std::list<int> newIDList;
+    int columnIndex = d_ptr->getColumnIndexByID(columnID);
+#ifdef ONTABLE_COLUMN_TYPE_CHECK
+    if (d_ptr->columnList[columnIndex]->typeID() != ColumnType::IntegerList)
+        return newIDList;
+#endif
+    ONTableIntListColumn* column =
+            dynamic_cast<ONTableIntListColumn*>(d_ptr->columnList[columnIndex]);
+    std::list<std::vector<int>>::const_iterator i;
+    int newID;
+    for (i=valueList.cbegin(); i!= valueList.cend(); i++)
+    {
+        newID = newRow();
+        column->set(newID, (*i).data(), (*i).size());
+        newIDList.push_back(newID);
+    }
+    return newIDList;
 }
 
 void ONTable::removeRow(int ID)

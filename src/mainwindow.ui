@@ -14,7 +14,7 @@
    <string>Openote</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="reources.qrc">
+   <iconset>
     <normaloff>:/icons/Openote.png</normaloff>:/icons/Openote.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -75,6 +75,7 @@
     <addaction name="actionColumnDelete"/>
     <addaction name="actionColumnDuplicate"/>
     <addaction name="actionColumnRename"/>
+    <addaction name="actionColumnToTable"/>
     <addaction name="separator"/>
     <addaction name="actionRowAdd"/>
     <addaction name="actionRowDelete"/>
@@ -234,13 +235,16 @@
   </action>
   <action name="actionEditPreference">
    <property name="text">
-    <string>Preference</string>
+    <string>P&amp;reference</string>
+   </property>
+  </action>
+  <action name="actionColumnToTable">
+   <property name="text">
+    <string>Convert Column to Table</string>
    </property>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="reources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

@@ -158,7 +158,7 @@ QString TableModel::referenceData(int rowIndex, int columnIndex) const
                         parentBook->columnReferenceTable(ID, columnID);
 
     // Use the first column in the referred table as data to display
-    if (targetTable->d->columnIDList.size() < 1)
+    if (targetTable == nullptr || targetTable->d->columnIDList.size() < 1)
         return targetValue;
     int targetColumnID = targetTable->d->columnIDList[0];
     for (auto i=referredRowIDs.cbegin(); i!=referredRowIDs.cend(); i++)
@@ -190,6 +190,18 @@ QString TableModel::referenceData(int rowIndex, int columnIndex) const
         }
     }
     return targetValue;
+}
+
+void TableModel::clearColumn(int columnID)
+{
+    ONTable::clearColumn(columnID);
+    if (rowCount() > 0)
+    {
+        int columnIndex = d->getColumnIndexByID(columnID);
+        emit dataChanged(index(0, columnIndex),
+                         index(rowCount() - 1, columnIndex),
+                         QVector<int>(Qt::EditRole));
+    }
 }
 
 bool TableModel::setData(const QModelIndex& index,
@@ -400,6 +412,12 @@ bool TableModel::duplicateColumn(int column, const QString& newName)
 
     endInsertColumns();
     return true;
+}
+
+void TableModel::clear()
+{
+    ONTable::clear();
+    emit layoutChanged();
 }
 
 bool TableModel::removeRows(int row, int count,

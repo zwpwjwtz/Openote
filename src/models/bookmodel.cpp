@@ -1,4 +1,5 @@
 #include <QList>
+#include <QMap>
 #include <sstream>
 #include "bookmodel.h"
 #include "bookmodel_p.h"
@@ -128,10 +129,12 @@ bool BookModel::removeTable(int tableID)
     d->tableList.erase(d->tableList.begin() + index);
     d->tableIDList.erase(d->tableIDList.begin() + index);
     d->tableNameList.erase(d->tableNameList.begin() + index);
-    for (auto i=d->columnReference.begin(); i!=d->columnReference.cend(); i++)
+    for (auto i=d->columnReference.begin(); i!=d->columnReference.end(); )
     {
         if (i->first.first == tableID)
-            d->columnReference.erase(i);
+            i = d->columnReference.erase(i);
+        else
+            i++;
     }
 
     // Update the data of parent class
@@ -140,14 +143,101 @@ bool BookModel::removeTable(int tableID)
     return true;
 }
 
+TableModel* BookModel::convertColumnToTable(TableModel* sourceTable,
+                                            int sourceColumnID,
+                                            const QString& newTableName)
+{
+    TableModel* newTable = addTable(newTableName);
+    if (newTable == nullptr || newTable->ID <= 0)
+        return nullptr;
+
+    // Create an empty column in the new table
+    std::string columnName = sourceTable->columnName(sourceColumnID);
+    TableModel::ColumnType columnType = sourceTable->columnType(sourceColumnID);
+
+    // Get values in the source column, remove duplicated values,
+    // then fill the new column by unique values
+    int targetColumnID = newTable->newColumn(columnName, columnType);
+    std::list<int> IDList = sourceTable->IDs(), newIDList;
+    QMap<int, int> indexMap;
+    std::list<int>::const_iterator i = IDList.cbegin();
+    switch (columnType)
+    {
+        case TableModel::Integer:
+        {
+            std::list<int> intList;
+            for (; i!=IDList.cend(); i++)
+                intList.push_back(sourceTable->readInt(*i, sourceColumnID));
+            BookModelPrivate::removeDuplicate<int>(intList, indexMap);
+            newIDList = newTable->insert(targetColumnID, intList);
+            break;
+        }
+        case TableModel::Double:
+        {
+            std::list<double> doubleList;
+            for (; i!=IDList.cend(); i++)
+                doubleList.push_back(
+                            sourceTable->readDouble(*i, sourceColumnID));
+            BookModelPrivate::removeDuplicate<double>(doubleList, indexMap);
+            newIDList = newTable->insert(targetColumnID, doubleList);
+            break;
+        }
+        case TableModel::String:
+        {
+            std::list<std::string> stringList;
+            for (; i!=IDList.cend(); i++)
+                stringList.push_back(
+                            sourceTable->readString(*i, sourceColumnID));
+            BookModelPrivate::removeDuplicate<std::string>(stringList,
+                                                           indexMap);
+            newIDList = newTable->insert(targetColumnID, stringList);
+            break;
+        }
+        case TableModel::IntegerList:
+        {
+            std::list<std::vector<int>> intListList;
+            for (; i!=IDList.cend(); i++)
+                intListList.push_back(
+                             sourceTable->readIntList(*i, sourceColumnID));
+            BookModelPrivate::removeDuplicate<std::vector<int>>(intListList,
+                                                                indexMap);
+            newIDList = newTable->insert(targetColumnID, intListList);
+            break;
+        }
+        default:;
+    }
+
+    // Replace the content of the source column with new row IDs
+    // Change the column type if needed
+    sourceTable->clearColumn(sourceColumnID);
+    sourceTable->setColumnType(sourceColumnID, TableModel::IntegerList);
+    int index;
+    std::list<int>::const_iterator j;
+    for (i=IDList.begin(), index = 0; i!=IDList.end(); i++, index++)
+    {
+        j = newIDList.cbegin();
+        std::advance(j, indexMap[index]);
+        sourceTable->modify(*i, sourceColumnID, std::vector<int>({ *j }));
+    }
+
+    // Update the column reference
+    setColumnReference(sourceTable->ID, sourceColumnID, newTable->ID);
+    sourceTable->setColumnReference(sourceColumnID, newTable->ID);
+
+    return newTable;
+}
+
 TableModel*
 BookModel::columnReferenceTable(int sourceTableID, int sourceColumnID)
 {
     int targetTableID = ONBook::columnReference(sourceTableID, sourceColumnID);
     if (targetTableID > 0)
-        return d->tableList[d->getTableIndexByID(targetTableID)];
-    else
-        return nullptr;
+    {
+        int index = d->getTableIndexByID(targetTableID);
+        if (index >= 0)
+            return d->tableList[index];
+    }
+    return nullptr;
 }
 
 QString BookModel::path() const
@@ -222,4 +312,28 @@ bool BookModelPrivate::loadTable(int tableID, const std::string& tableName)
     ONBookPrivate::tableList.push_back(table);
 
     return true;
+}
+
+template <typename T>
+void BookModelPrivate::removeDuplicate(std::list<T>& valueList,
+                                       QMap<int, int>& indexMap)
+{
+    int index = 0;
+    std::_List_iterator<T> i;
+    std::_List_const_iterator<T> pos;
+    for (i=valueList.begin(); i!=valueList.end(); )
+    {
+        pos = std::find(valueList.begin(), i, *i);
+        if (pos == i)
+        {
+            indexMap.insert(index, indexMap.count());
+            i++;
+        }
+        else
+        {
+            indexMap.insert(index, int(distance(valueList.cbegin(), pos)));
+            i = valueList.erase(i);
+        }
+        index++;
+    }
 }

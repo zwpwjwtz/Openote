@@ -103,10 +103,12 @@ void ONBook::removeTable(int tableID)
     d_ptr->tableIDList.erase(d_ptr->tableIDList.begin() + index);
     d_ptr->tableNameList.erase(d_ptr->tableNameList.begin() + index);
     for (auto i=d_ptr->columnReference.begin();
-         i!=d_ptr->columnReference.cend(); i++)
+         i!=d_ptr->columnReference.end(); )
     {
         if (i->first.first == tableID)
             d_ptr->columnReference.erase(i);
+        else
+            i++;
     }
 }
 

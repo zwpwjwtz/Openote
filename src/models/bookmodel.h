@@ -25,6 +25,9 @@ public:
 
     TableModel* table(int tableID) const;
     TableModel* addTable(const QString& tableName);
+    TableModel* convertColumnToTable(TableModel *sourceTable,
+                                     int sourceColumnID,
+                                     const QString& newTableName);
     TableModel* duplicateTable(int tableID, const QString& newName);
     bool removeTable(int tableID);
 

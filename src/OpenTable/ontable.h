@@ -46,11 +46,15 @@ public:
     virtual void setColumnName(int columnID, const std::string &newName);
 
     virtual void clear();
+    virtual void clearRow(int ID);
+    virtual void clearColumn(int columnID);
 
     virtual int newRow();
     virtual int newColumn(const std::string& name, ColumnType columnType);
 
     virtual ColumnType columnType(int columnID) const;
+    virtual bool setColumnType(int columnID, ColumnType newType);
+
     virtual ONTableDefaultValue defaultValues() const;
     virtual void setDefaultValues(const ONTableDefaultValue& values);
 
@@ -64,6 +68,15 @@ public:
     virtual bool modify(int ID, int columnID, const std::string& value);
     virtual bool modify(int ID, int columnID,
                         const std::vector<int>& valueList);
+
+    virtual std::list<int> insert(int columnID,
+                                  const std::list<int>& valueList);
+    virtual std::list<int> insert(int columnID,
+                                  const std::list<double>& valueList);
+    virtual std::list<int> insert(int columnID,
+                                  const std::list<std::string>& valueList);
+    virtual std::list<int> insert(int columnID,
+                                  const std::list<std::vector<int>>& valueList);
 
     virtual void removeRow(int ID);
     virtual void removeColumn(int columnID);

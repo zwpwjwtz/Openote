@@ -1,6 +1,8 @@
 #ifndef BOOKMODEL_P_H
 #define BOOKMODEL_P_H
 
+#include <list>
+#include <QMap>
 #include "OpenTable/onbook_p.h"
 
 
@@ -23,6 +25,10 @@ public:
     std::vector<TableModel*> tableList;
 
     virtual bool loadTable(int tableID, const std::string& tableName);
+
+    template <typename T>
+    static void removeDuplicate(std::list<T>& valueList,
+                                QMap<int, int>& indexMap);
 };
 
 #endif // BOOKMODEL_P_H

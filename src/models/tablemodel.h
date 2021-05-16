@@ -41,6 +41,7 @@ public:
     QString referenceData(int rowIndex, int columnIndex) const;
 
     // Editable:
+    void clearColumn(int columnID) override;
     bool setData(const QModelIndex& index, const QVariant& value,
                  int role = Qt::EditRole) override;
     bool setColumnReference(int columnIndex, int referenceID);
@@ -62,6 +63,7 @@ public:
     bool duplicateColumn(int column, const QString &newName);
 
     // Remove data:
+    void clear() override;
     bool removeRows(int row, int count,
                     const QModelIndex& parent = QModelIndex()) override;
     bool removeColumns(int column, int count,

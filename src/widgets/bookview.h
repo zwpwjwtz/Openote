@@ -34,6 +34,7 @@ public slots:
     bool deleteColumn();
     bool duplicateColumn();
     bool renameColumn();
+    bool columnToTable();
 
     bool addRow();
     bool deleteRow();

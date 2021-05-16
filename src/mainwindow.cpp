@@ -28,6 +28,8 @@ MainWindow::MainWindow(QWidget *parent) :
             bookWidget, SLOT(duplicateColumn()));
     connect(ui->actionColumnRename, SIGNAL(triggered()),
             bookWidget, SLOT(renameColumn()));
+    connect(ui->actionColumnToTable, SIGNAL(triggered()),
+            bookWidget, SLOT(columnToTable()));
     connect(ui->actionRowAdd, SIGNAL(triggered()),
             bookWidget, SLOT(addRow()));
     connect(ui->actionRowDelete, SIGNAL(triggered()),
