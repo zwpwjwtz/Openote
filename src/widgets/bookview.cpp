@@ -31,6 +31,15 @@ BookView::BookView(QWidget *parent) : QTabWidget(parent)
     clear();
 }
 
+
+BookView::~BookView()
+{
+    delete dialogColumnAdd;
+    delete referenceDelegate;
+    delete contextMenu;
+    delete actionDispatcher;
+}
+
 void BookView::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::RightButton &&

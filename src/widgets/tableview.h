@@ -17,6 +17,7 @@ public:
     void setID(int ID);
 
 protected:
+    void keyPressEvent(QKeyEvent* event);
     void mousePressEvent(QMouseEvent* event);
 
 signals:

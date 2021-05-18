@@ -5,7 +5,6 @@
 #include <QListView>
 #include <QMessageBox>
 
-#define OPENOTE_DELEGATE_EDITOR_PROP_ID    "column-reference"
 #define OPENOTE_DELEGATE_EDITOR_PROP_TABLE "table-id"
 #define OPENOTE_DELEGATE_EDITOR_PROP_COL   "column-id"
 
@@ -48,7 +47,6 @@ ColumnReferenceDelegate::createEditor(QWidget* parent,
     auto rowIDs = referenceTable->IDs();
 
     ColumnReferenceSelector* listEditor = new ColumnReferenceSelector(parent);
-    listEditor->setProperty(OPENOTE_DELEGATE_EDITOR_PROP_ID, true);
     listEditor->setProperty(OPENOTE_DELEGATE_EDITOR_PROP_TABLE, table->ID);
     listEditor->setProperty(OPENOTE_DELEGATE_EDITOR_PROP_COL, columnID);
     connect(listEditor, &ColumnReferenceSelector::addingItemRequested,
@@ -83,6 +81,8 @@ ColumnReferenceDelegate::createEditor(QWidget* parent,
         }
     }
 
+    listEditor->scrollToBottom();
+
     return listEditor;
 }
 
@@ -90,8 +90,7 @@ void ColumnReferenceDelegate::setEditorData(QWidget* editor,
                                             const QModelIndex& index) const
 {
     auto listEditor = dynamic_cast<ColumnReferenceSelector*>(editor);
-    if (listEditor == nullptr ||
-        !listEditor->property(OPENOTE_DELEGATE_EDITOR_PROP_ID).isValid())
+    if (listEditor == nullptr)
     {
         // Not an editor create by this class; ignore it
         return QItemDelegate::setEditorData(editor, index);
@@ -109,8 +108,7 @@ void ColumnReferenceDelegate::setModelData(QWidget* editor,
                                            const QModelIndex& index) const
 {
     auto listEditor = dynamic_cast<ColumnReferenceSelector*>(editor);
-    if (listEditor == nullptr ||
-        !listEditor->property(OPENOTE_DELEGATE_EDITOR_PROP_ID).isValid())
+    if (listEditor == nullptr)
     {
         // Not an editor create by this class; ignore it
         return QItemDelegate::setModelData(editor, model, index);
@@ -133,6 +131,19 @@ void ColumnReferenceDelegate::setModelData(QWidget* editor,
         valueList.push_back(*i);
     table->setData(index, valueList);
     return;
+}
+
+void ColumnReferenceDelegate::updateEditorGeometry(QWidget *editor,
+                                           const QStyleOptionViewItem &option,
+                                           const QModelIndex &index) const
+{
+    auto listEditor = dynamic_cast<ColumnReferenceSelector*>(editor);
+    if (listEditor == nullptr)
+        return QItemDelegate::updateEditorGeometry(editor, option, index);
+
+    listEditor->setOptimizedSize();
+    listEditor->resize(option.rect.width(), listEditor->height());
+    listEditor->move(option.rect.x(), option.rect.y());
 }
 
 void ColumnReferenceDelegate::onEditorAddingItemRequested(

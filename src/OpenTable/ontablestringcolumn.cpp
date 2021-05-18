@@ -89,7 +89,7 @@ void ONTableStringColumn::duplicate(int oldKey, int newKey)
         return;
 
     char* data = nullptr;
-    size_t stringLength;
+    int stringLength;
     if ((*pos1).second != nullptr)
     {
         memcpy(&stringLength, (*pos1).second, sizeof(int));
@@ -111,7 +111,7 @@ void ONTableStringColumn::remove(int key)
     std::map<int, char*>::const_iterator pos = d->data.find(key);
     if (pos != d->data.cend())
     {
-        delete static_cast<char*>((*pos).second);
+        delete[] static_cast<char*>((*pos).second);
         d->data.erase(key);
     }
 }
@@ -162,7 +162,9 @@ bool ONTableStringColumn::load()
         if (feof(f))
             break;
     }
+
     fclose(f);
+    delete[] buffer;
     return true;
 }
 

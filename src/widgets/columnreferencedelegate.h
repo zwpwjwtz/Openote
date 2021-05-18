@@ -22,6 +22,10 @@ public:
     virtual void setModelData(QWidget* editor,
                               QAbstractItemModel* model,
                               const QModelIndex& index) const;
+    virtual void updateEditorGeometry(QWidget *editor,
+                              const QStyleOptionViewItem &option,
+                              const QModelIndex &index) const;
+
 
 private slots:
     void onEditorAddingItemRequested(ColumnReferenceSelector* editor,

@@ -18,6 +18,7 @@ class BookView : public QTabWidget
     Q_OBJECT
 public:
     explicit BookView(QWidget *parent = nullptr);
+    ~BookView();
 
     void clear();
     bool loadBook(const QString& path);

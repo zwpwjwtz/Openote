@@ -30,8 +30,13 @@ public:
 
     void setOptimizedSize(int visibleCount = 5);
 
+    void scrollToTop();
+    void scrollToBottom();
+    void scrollToItem(int ID);
+
 protected:
-    void resizeEvent(QResizeEvent* event);
+    void focusInEvent(QFocusEvent* event);
+    void keyPressEvent(QKeyEvent* event);
 
 signals:
     void addingItemRequested(ColumnReferenceSelector* editor,

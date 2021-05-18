@@ -33,8 +33,8 @@ ONTableIntListColumn::ONTableIntListColumn(const ONTableIntListColumn& src) :
         memcpy(&dataLength, i->second, sizeof(int));
         if (dataLength < 0)
             continue;
-        newData = new char[dataLength + sizeof(int)];
-        memcpy(newData, i->second, dataLength + sizeof(int));
+        newData = new char[sizeof(int) * (1 + dataLength)];
+        memcpy(newData, i->second, sizeof(int) * (1 + dataLength));
         d->data.insert(std::make_pair(i->first, newData));
     }
 }
@@ -73,9 +73,9 @@ void ONTableIntListColumn::set(int key, const int* valueList, int count)
     if (count < 0 || count + 4 > INT_MAX)
         return;
 
-    char* data = new char[sizeof(int) + count];
+    char* data = new char[sizeof(int) * (1 + count)];
     memcpy(data, &count, sizeof(int));
-    memcpy(data + sizeof(int), valueList, count * sizeof(int));
+    memcpy(data + sizeof(int), valueList, sizeof(int) * count);
 
     std::map<int, char*>::iterator pos = d->data.find(key);
     if (pos == d->data.cend())
@@ -95,13 +95,13 @@ void ONTableIntListColumn::duplicate(int oldKey, int newKey)
     if (pos1 == d_ptr->data.end())
         return;
 
-    size_t count;
+    int count;
     int* data = nullptr;
     if ((*pos1).second != nullptr)
     {
         memcpy(&count, (*pos1).second, sizeof(int));
-        data = new int[sizeof(int) + count];
-        memcpy(data, (*pos1).second, sizeof(int) + count);
+        data = new int[sizeof(int) * (1 + count)];
+        memcpy(data, (*pos1).second, sizeof(int) * (1 + count));
     }
     if ((pos2 == d_ptr->data.end()))
         d_ptr->data.insert(pos2,
@@ -181,7 +181,9 @@ bool ONTableIntListColumn::load()
         if (feof(f))
             break;
     }
+
     fclose(f);
+    delete[] buffer;
     return true;
 }
 
