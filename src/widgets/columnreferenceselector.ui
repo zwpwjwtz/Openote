@@ -54,13 +54,34 @@
      </layout>
     </item>
     <item>
-     <widget class="QListView" name="listView">
+     <widget class="QTableView" name="listView">
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarAlwaysOn</enum>
       </property>
       <property name="horizontalScrollBarPolicy">
        <enum>Qt::ScrollBarAlwaysOff</enum>
       </property>
+      <property name="autoScroll">
+       <bool>false</bool>
+      </property>
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectRows</enum>
+      </property>
+      <property name="showGrid">
+       <bool>false</bool>
+      </property>
+      <attribute name="horizontalHeaderVisible">
+       <bool>false</bool>
+      </attribute>
+      <attribute name="horizontalHeaderMinimumSectionSize">
+       <number>0</number>
+      </attribute>
+      <attribute name="verticalHeaderVisible">
+       <bool>false</bool>
+      </attribute>
      </widget>
     </item>
    </layout>

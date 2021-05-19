@@ -9,10 +9,14 @@ ColumnReferenceSelector::ColumnReferenceSelector(QWidget* parent) :
     QFrame(parent),
     ui(new Ui::ColumnReferenceSelector)
 {
+    listModel.setColumnCount(2);
+
     ui->setupUi(this);
     setLayout(ui->verticalLayout);
     ui->listView->setModel(&listModel);
-    ui->listView->setModelColumn(0);
+    ui->listView->horizontalHeader()
+                    ->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    ui->listView->horizontalHeader()->setStretchLastSection(true);
 }
 
 void ColumnReferenceSelector::focusInEvent(QFocusEvent* event)
@@ -44,39 +48,51 @@ int ColumnReferenceSelector::count() const
 
 void ColumnReferenceSelector::clear()
 {
-    listModel.clear();
+    listModel.setRowCount(0);
     IDList.clear();
 }
 
 void ColumnReferenceSelector::addItem(int ID, const QString& text)
 {
+    QStandardItem* checkbox = new QStandardItem(" ");
+    checkbox->setCheckable(true);
+    checkbox->setEditable(false);
+    checkbox->setSelectable(false);
     QStandardItem* item = new QStandardItem(text);
     item->setData(text.toLower(), OPENOTE_REFSELECTOR_ITEM_ROLE_SEARCH);
-    item->setCheckable(true);
+    item->setCheckable(false);
     item->setEditable(false);
-    listModel.appendRow(item);
+    listModel.appendRow(QList<QStandardItem*>() << checkbox << item);
     IDList.push_back(ID);
 }
 
 void ColumnReferenceSelector::addItem(int ID, int intValue)
 {
+    QStandardItem* checkbox = new QStandardItem(" ");
+    checkbox->setCheckable(true);
+    checkbox->setEditable(false);
+    checkbox->setSelectable(false);
     QStandardItem* item = new QStandardItem(QString::number(intValue));
     item->setData(QString::number(intValue),
                   OPENOTE_REFSELECTOR_ITEM_ROLE_SEARCH);
     item->setCheckable(true);
     item->setEditable(false);
-    listModel.appendRow(item);
+    listModel.appendRow(QList<QStandardItem*>() << checkbox << item);
     IDList.push_back(ID);
 }
 
 void ColumnReferenceSelector::addItem(int ID, double doubleValue)
 {
+    QStandardItem* checkbox = new QStandardItem(" ");
+    checkbox->setCheckable(true);
+    checkbox->setEditable(false);
+    checkbox->setSelectable(false);
     QStandardItem* item = new QStandardItem(QString::number(doubleValue));
     item->setData(QString::number(doubleValue),
                   OPENOTE_REFSELECTOR_ITEM_ROLE_SEARCH);
     item->setCheckable(true);
     item->setEditable(false);
-    listModel.appendRow(item);
+    listModel.appendRow(QList<QStandardItem*>() << checkbox << item);
     IDList.push_back(ID);
 }
 
@@ -131,7 +147,31 @@ void ColumnReferenceSelector::scrollToItem(int ID)
 {
     int index = IDList.indexOf(ID);
     if (index >= 0)
-        ui->listView->scrollTo(listModel.index(0, index));
+        ui->listView->scrollTo(listModel.index(index, 0));
+}
+
+void ColumnReferenceSelector::scrollToFirstChecked()
+{
+    for (int i=0; i<listModel.rowCount(); i++)
+    {
+        if (listModel.item(i, 0)->checkState() == Qt::Checked)
+        {
+            ui->listView->scrollTo(listModel.index(i, 0));
+            break;
+        }
+    }
+}
+
+void ColumnReferenceSelector::scrollToLastChecked()
+{
+    for (int i=listModel.rowCount()-1; i>=0; i--)
+    {
+        if (listModel.item(i, 0)->checkState() == Qt::Checked)
+        {
+            ui->listView->scrollTo(listModel.index(i, 0));
+            break;
+        }
+    }
 }
 
 void ColumnReferenceSelector::on_textSearch_textChanged()
@@ -143,7 +183,7 @@ void ColumnReferenceSelector::on_textSearch_textChanged()
     for (int i=0; i<count; i++)
     {
         ui->listView->setRowHidden(i,
-                                   !listModel.item(i, 0)
+                                   !listModel.item(i, 1)
                                    ->data(OPENOTE_REFSELECTOR_ITEM_ROLE_SEARCH)
                                    .toString().contains(searchText));
     }

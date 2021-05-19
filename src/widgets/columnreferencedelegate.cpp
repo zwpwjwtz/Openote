@@ -81,8 +81,6 @@ ColumnReferenceDelegate::createEditor(QWidget* parent,
         }
     }
 
-    listEditor->scrollToBottom();
-
     return listEditor;
 }
 
@@ -100,6 +98,8 @@ void ColumnReferenceDelegate::setEditorData(QWidget* editor,
 
     for (int i=0; i<currentData.count(); i++)
         listEditor->setChecked(currentData[i].toInt());
+    listEditor->scrollToLastChecked();
+
     return;
 }
 
@@ -143,7 +143,17 @@ void ColumnReferenceDelegate::updateEditorGeometry(QWidget *editor,
 
     listEditor->setOptimizedSize();
     listEditor->resize(option.rect.width(), listEditor->height());
-    listEditor->move(option.rect.x(), option.rect.y());
+
+    int x = option.rect.x(), y = option.rect.y();
+    QWidget* parent = dynamic_cast<QWidget*>(listEditor->parent());
+    if (parent)
+    {
+        if (parent->width() < x + editor->width())
+            x = parent->height() - editor->width();
+        if (parent->height() < y + editor->height())
+            y = parent->height() - editor->height();
+    }
+    listEditor->move(x, y);
 }
 
 void ColumnReferenceDelegate::onEditorAddingItemRequested(

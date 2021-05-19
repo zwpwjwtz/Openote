@@ -33,6 +33,8 @@ public:
     void scrollToTop();
     void scrollToBottom();
     void scrollToItem(int ID);
+    void scrollToFirstChecked();
+    void scrollToLastChecked();
 
 protected:
     void focusInEvent(QFocusEvent* event);
