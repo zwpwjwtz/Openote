@@ -20,6 +20,15 @@ MainWindow::MainWindow(QWidget *parent) :
     bookWidget = new BookView(this);
     ui->centralWidget->layout()->addWidget(bookWidget);
 
+
+    connect(ui->actionEditCopy, SIGNAL(triggered()),
+            bookWidget, SLOT(copyContent()));
+    connect(ui->actionEditCut, SIGNAL(triggered()),
+            bookWidget, SLOT(cutContent()));
+    connect(ui->actionEditPaste, SIGNAL(triggered()),
+            bookWidget, SLOT(pasteContent()));
+    connect(ui->actionEditDelete, SIGNAL(triggered()),
+            bookWidget, SLOT(deleteContent()));
     connect(ui->actionColumnAdd, SIGNAL(triggered()),
             bookWidget, SLOT(addColumn()));
     connect(ui->actionColumnDelete, SIGNAL(triggered()),
@@ -120,6 +129,15 @@ bool MainWindow::saveBook(QString path)
     if (oldPath.isEmpty())
         bookWidget->setPath(oldPath);
     return false;
+}
+
+void MainWindow::on_menuEdit_triggered()
+{
+    bool hasSelectedItem = bookWidget->selected();
+    ui->actionEditCopy->setEnabled(hasSelectedItem);
+    ui->actionEditCut->setEnabled(hasSelectedItem);
+    ui->actionEditDelete->setEnabled(hasSelectedItem);
+    ui->actionEditPaste->setEnabled(bookWidget->pastingEnabled());
 }
 
 void MainWindow::on_actionFileNew_triggered()

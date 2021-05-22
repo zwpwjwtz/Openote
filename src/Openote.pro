@@ -49,7 +49,8 @@ SOURCES += \
     dialogs/dialogpreference.cpp \
     global.cpp \
     widgets/tableview.cpp \
-    widgets/columnheaderview.cpp
+    widgets/columnheaderview.cpp \
+    models/clipboardmodel.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -78,7 +79,8 @@ HEADERS += \
     dialogs/dialogpreference.h \
     global.h \
     widgets/tableview.h \
-    widgets/columnheaderview.h
+    widgets/columnheaderview.h \
+    models/clipboardmodel.h
 
 FORMS += \
     mainwindow.ui \

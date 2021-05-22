@@ -111,6 +111,24 @@ void ONTable::clear()
     d_ptr->IDList.clear();
 }
 
+void ONTable::clear(int ID, int columnID)
+{
+    int columnIndex = d_ptr->getColumnIndexByID(columnID);
+    if (columnIndex < 0)
+        return;
+
+    ONTableColumn* column = d_ptr->columnList[columnIndex];
+    if (column == nullptr || !column->exists(ID))
+        return;
+
+    char* value = column->value(ID);
+    if (value != nullptr)
+    {
+        column->set(ID, nullptr);
+        delete[] value;
+    }
+}
+
 void ONTable::clearRow(int ID)
 {
     std::list<int>::iterator pos = std::find(d_ptr->IDList.begin(),

@@ -9,11 +9,13 @@
 #include "bookcontextmenu.h"
 #include "bookactiondispatcher.h"
 #include "models/tablemodel.h"
+#include "models/clipboardmodel.h"
 #include "dialogs/dialogcolumnadd.h"
 
 
 BookView::BookView(QWidget *parent) : QTabWidget(parent)
 {
+    clipboard = new ClipboardModel;
     dialogColumnAdd = nullptr;
     referenceDelegate = new ColumnReferenceDelegate();
     referenceDelegate->book = &book;
@@ -34,6 +36,7 @@ BookView::BookView(QWidget *parent) : QTabWidget(parent)
 
 BookView::~BookView()
 {
+    delete clipboard;
     delete dialogColumnAdd;
     delete referenceDelegate;
     delete contextMenu;
@@ -131,6 +134,17 @@ void BookView::setPath(const QString &newPath)
 bool BookView::modified() const
 {
     return isModified;
+}
+
+bool BookView::selected() const
+{
+    BookIndex index = getCurrentIndex();
+    return index.table >= 0 && index.column >= 0 && index.row >= 0;
+}
+
+bool BookView::pastingEnabled() const
+{
+    return clipboard->canPaste();
 }
 
 bool BookView::addColumn()
@@ -404,6 +418,93 @@ bool BookView::renameTable()
         return true;
     }
     return false;
+}
+
+bool BookView::copyContent()
+{
+    BookIndex index = currentBookIndex = getCurrentIndex();
+    TableModel* table = book.table(getTableID(index.table));
+    int columnID = table->columnID(index.column);
+    int rowID = table->rowID(index.row);
+    switch (table->columnType(columnID))
+    {
+        case TableModel::Integer:
+            clipboard->copy(table->readInt(rowID, columnID));
+            break;
+        case TableModel::Double:
+            clipboard->copy(table->readDouble(rowID, columnID));
+            break;
+        case TableModel::String:
+            clipboard->copy(table->readString(rowID, columnID));
+            break;
+        case TableModel::IntegerList:
+            clipboard->copy(table->readIntList(rowID, columnID));
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+bool BookView::cutContent()
+{
+    BookIndex index = currentBookIndex = getCurrentIndex();
+    TableModel* table = book.table(getTableID(index.table));
+    int columnID = table->columnID(index.column);
+    int rowID = table->rowID(index.row);
+    switch (table->columnType(columnID))
+    {
+        case TableModel::Integer:
+            clipboard->copy(table->readInt(rowID, columnID));
+            break;
+        case TableModel::Double:
+            clipboard->copy(table->readDouble(rowID, columnID));
+            break;
+        case TableModel::String:
+            clipboard->copy(table->readString(rowID, columnID));
+            break;
+        case TableModel::IntegerList:
+            clipboard->copy(table->readIntList(rowID, columnID));
+            break;
+        default:
+            return false;
+    }
+    table->ONTable::clear(rowID, columnID);
+    return true;
+}
+
+bool BookView::pasteContent()
+{
+    BookIndex index = currentBookIndex = getCurrentIndex();
+    TableModel* table = book.table(getTableID(index.table));
+    int columnID = table->columnID(index.column);
+    int rowID = table->rowID(index.row);
+    switch (table->columnType(columnID))
+    {
+        case TableModel::Integer:
+            return table->modify(rowID, columnID, clipboard->pasteAsInt());
+        case TableModel::Double:
+            return table->modify(rowID, columnID, clipboard->pasteAsDouble());
+        case TableModel::String:
+            return table->modify(rowID, columnID, clipboard->pasteAsString());
+        case TableModel::IntegerList:
+            return table->modify(rowID, columnID, clipboard->pasteAsIntList());
+        default:
+            return false;
+    }
+}
+
+bool BookView::deleteContent()
+{
+    BookIndex index = currentBookIndex = getCurrentIndex();
+    if (!index.isValid())
+        return false;
+
+    TableModel* table = book.table(getTableID(index.table));
+    int columnID = table->columnID(index.column);
+    int rowID = table->rowID(index.row);
+    table->ONTable::clear(rowID, columnID);
+    return true;
 }
 
 int BookView::getTableID(int tableIndex) const

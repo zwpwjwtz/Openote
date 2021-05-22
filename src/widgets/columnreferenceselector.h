@@ -17,6 +17,7 @@ class ColumnReferenceSelector : public QFrame
 
 public:
     explicit ColumnReferenceSelector(QWidget *parent = nullptr);
+    ~ColumnReferenceSelector();
 
     int count() const;
 

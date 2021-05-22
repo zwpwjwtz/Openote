@@ -76,7 +76,7 @@ void ONTableStringColumn::set(int key, const std::string& value)
     else
     {
         if ((*pos).second != nullptr)
-            delete (*pos).second;
+            delete[] (*pos).second;
         (*pos).second = data;
     }
 }
@@ -101,7 +101,7 @@ void ONTableStringColumn::duplicate(int oldKey, int newKey)
     else
     {
         if ((*pos2).second != nullptr)
-            delete (*pos2).second;
+            delete[] (*pos2).second;
         (*pos2).second = data;
     }
 }

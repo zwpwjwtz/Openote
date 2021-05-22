@@ -46,6 +46,7 @@ public:
     virtual void setColumnName(int columnID, const std::string &newName);
 
     virtual void clear();
+    virtual void clear(int ID, int columnID);
     virtual void clearRow(int ID);
     virtual void clearColumn(int columnID);
 

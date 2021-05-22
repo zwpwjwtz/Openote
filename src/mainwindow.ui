@@ -14,7 +14,7 @@
    <string>Openote</string>
   </property>
   <property name="windowIcon">
-   <iconset>
+   <iconset resource="reources.qrc">
     <normaloff>:/icons/Openote.png</normaloff>:/icons/Openote.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -156,6 +156,9 @@
    <property name="text">
     <string>&amp;Delete</string>
    </property>
+   <property name="shortcut">
+    <string>Del</string>
+   </property>
   </action>
   <action name="actionEditFind">
    <property name="text">
@@ -245,6 +248,8 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="reources.qrc"/>
+ </resources>
  <connections/>
 </ui>

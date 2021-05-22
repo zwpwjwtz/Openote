@@ -35,6 +35,7 @@ private:
     bool saveBook(QString path = "");
 
 private slots:
+    void on_menuEdit_triggered();
     void on_actionFileNew_triggered();
     void on_actionFileOpen_triggered();
     void on_actionFileSave_triggered();

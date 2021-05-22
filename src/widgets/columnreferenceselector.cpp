@@ -19,6 +19,11 @@ ColumnReferenceSelector::ColumnReferenceSelector(QWidget* parent) :
     ui->listView->horizontalHeader()->setStretchLastSection(true);
 }
 
+ColumnReferenceSelector::~ColumnReferenceSelector()
+{
+    delete ui;
+}
+
 void ColumnReferenceSelector::focusInEvent(QFocusEvent* event)
 {
     ui->textSearch->setFocus();

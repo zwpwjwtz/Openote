@@ -83,7 +83,7 @@ void ONTableIntListColumn::set(int key, const int* valueList, int count)
     else
     {
         if ((*pos).second != nullptr)
-            delete (*pos).second;
+            delete[] (*pos).second;
         (*pos).second = data;
     }
 }
@@ -109,7 +109,7 @@ void ONTableIntListColumn::duplicate(int oldKey, int newKey)
     else
     {
         if ((*pos2).second == nullptr)
-            delete (*pos2).second;
+            delete[] (*pos2).second;
         (*pos2).second = reinterpret_cast<char*>(data);
     }
 }
@@ -119,7 +119,7 @@ void ONTableIntListColumn::remove(int key)
     std::map<int, char*>::const_iterator pos = d->data.find(key);
     if (pos != d->data.cend())
     {
-        delete static_cast<char*>((*pos).second);
+        delete[] static_cast<char*>((*pos).second);
         d->data.erase(key);
     }
 }

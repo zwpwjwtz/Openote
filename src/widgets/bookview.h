@@ -7,6 +7,7 @@
 
 
 class BookModel;
+class ClipboardModel;
 class TableView;
 class ColumnReferenceDelegate;
 class DialogColumnAdd;
@@ -29,6 +30,8 @@ public:
     void setPath(const QString& newPath);
 
     bool modified() const;
+    bool selected() const;
+    bool pastingEnabled() const;
 
 public slots:
     bool addColumn();
@@ -46,6 +49,11 @@ public slots:
     bool duplicateTable();
     bool renameTable();
 
+    bool copyContent();
+    bool cutContent();
+    bool pasteContent();
+    bool deleteContent();
+
 protected:
     void mousePressEvent(QMouseEvent* event);
 
@@ -59,10 +67,11 @@ private:
         { return table >= 0 && column >= 0 && row >= 0; }
     };
 
-    BookModel book;
-    DialogColumnAdd* dialogColumnAdd;
     bool isModified;
+    BookModel book;
     BookIndex currentBookIndex;
+    ClipboardModel* clipboard;
+    DialogColumnAdd* dialogColumnAdd;
     ColumnReferenceDelegate* referenceDelegate;
     BookContextMenu* contextMenu;
     BookActionDispatcher* actionDispatcher;
