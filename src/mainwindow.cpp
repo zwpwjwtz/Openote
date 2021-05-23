@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent) :
             bookWidget, SLOT(pasteContent()));
     connect(ui->actionEditDelete, SIGNAL(triggered()),
             bookWidget, SLOT(deleteContent()));
+    connect(ui->actionEditFind, SIGNAL(triggered()),
+            bookWidget, SLOT(findContent()));
     connect(ui->actionColumnAdd, SIGNAL(triggered()),
             bookWidget, SLOT(addColumn()));
     connect(ui->actionColumnDelete, SIGNAL(triggered()),
@@ -138,6 +140,7 @@ void MainWindow::on_menuEdit_triggered()
     ui->actionEditCut->setEnabled(hasSelectedItem);
     ui->actionEditDelete->setEnabled(hasSelectedItem);
     ui->actionEditPaste->setEnabled(bookWidget->pastingEnabled());
+    ui->actionEditFind->setEnabled(bookWidget->count() > 0);
 }
 
 void MainWindow::on_actionFileNew_triggered()

@@ -2,17 +2,9 @@
 #define BOOKVIEW_H
 
 #include <QTabWidget>
-#include <QMap>
-#include "models/bookmodel.h"
 
 
-class BookModel;
-class ClipboardModel;
-class TableView;
-class ColumnReferenceDelegate;
-class DialogColumnAdd;
-class BookContextMenu;
-class BookActionDispatcher;
+class BookViewPrivate;
 
 class BookView : public QTabWidget
 {
@@ -53,46 +45,11 @@ public slots:
     bool cutContent();
     bool pasteContent();
     bool deleteContent();
+    bool findContent();
 
 protected:
+    BookViewPrivate* d_ptr;
     void mousePressEvent(QMouseEvent* event);
-
-private:
-    struct BookIndex
-    {
-        int table;
-        int column;
-        int row;
-        bool isValid()
-        { return table >= 0 && column >= 0 && row >= 0; }
-    };
-
-    bool isModified;
-    BookModel book;
-    BookIndex currentBookIndex;
-    ClipboardModel* clipboard;
-    DialogColumnAdd* dialogColumnAdd;
-    ColumnReferenceDelegate* referenceDelegate;
-    BookContextMenu* contextMenu;
-    BookActionDispatcher* actionDispatcher;
-
-    int getTableID(int tableIndex) const;
-    int getTableIndex(int tableID) const;
-    BookIndex getCurrentIndex() const;
-
-    void bindTableModel(const TableModel* model);
-    void bindTableView(TableView *table);
-
-    QString columnHeader(int tableIndex, int columnIndex) const;
-    bool setColumnHeader(const QString& text, int tableIndex, int columnIndex);
-
-private slots:
-    void onDialogColumnAddFinished(int result);
-    void onTableDataChanged();
-    void onColumnHeaderRightClicked(int index);
-    void onColumnHeaderDoubleClicked(int index);
-    void onGridRightClicked(int rowIndex, int columnIndex);
-    void onTabBarDoubleClicked(int index);
 };
 
 #endif // BOOKVIEW_H

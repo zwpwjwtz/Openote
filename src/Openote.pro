@@ -50,7 +50,8 @@ SOURCES += \
     global.cpp \
     widgets/tableview.cpp \
     widgets/columnheaderview.cpp \
-    models/clipboardmodel.cpp
+    models/clipboardmodel.cpp \
+    dialogs/dialogfind.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -80,14 +81,17 @@ HEADERS += \
     global.h \
     widgets/tableview.h \
     widgets/columnheaderview.h \
-    models/clipboardmodel.h
+    models/clipboardmodel.h \
+    dialogs/dialogfind.h \
+    widgets/bookview_p.h
 
 FORMS += \
     mainwindow.ui \
     dialogs/dialogabout.ui \
     dialogs/dialogcolumnadd.ui \
     widgets/columnreferenceselector.ui \
-    dialogs/dialogpreference.ui
+    dialogs/dialogpreference.ui \
+    dialogs/dialogfind.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
