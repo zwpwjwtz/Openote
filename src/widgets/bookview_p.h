@@ -13,6 +13,7 @@ class DialogColumnAdd;
 class DialogFind;
 class BookContextMenu;
 class BookActionDispatcher;
+class BookViewTabbar;
 
 class BookView;
 
@@ -33,6 +34,7 @@ public:
 
     bool isModified;
     BookModel book;
+    BookViewTabbar* tabBar;
 
     BookViewPrivate(BookView* parent = nullptr);
     ~BookViewPrivate();
@@ -43,7 +45,7 @@ public:
     BookIndex getCurrentIndex();
 
     void bindTableModel(const TableModel* model);
-    void bindTableView(TableView *table);
+    void bindTableView(TableView *table, TableModel* model);
 
     QString columnHeader(int tableIndex, int columnIndex) const;
     bool setColumnHeader(const QString& text, int tableIndex, int columnIndex);

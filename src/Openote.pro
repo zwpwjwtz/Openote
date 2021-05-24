@@ -51,7 +51,8 @@ SOURCES += \
     widgets/tableview.cpp \
     widgets/columnheaderview.cpp \
     models/clipboardmodel.cpp \
-    dialogs/dialogfind.cpp
+    dialogs/dialogfind.cpp \
+    widgets/bookviewtabbar.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -83,7 +84,8 @@ HEADERS += \
     widgets/columnheaderview.h \
     models/clipboardmodel.h \
     dialogs/dialogfind.h \
-    widgets/bookview_p.h
+    widgets/bookview_p.h \
+    widgets/bookviewtabbar.h
 
 FORMS += \
     mainwindow.ui \

@@ -4,6 +4,7 @@
 #include <QInputDialog>
 #include <QMouseEvent>
 #include "bookview.h"
+#include "bookviewtabbar.h"
 #include "bookview_p.h"
 #include "tableview.h"
 #include "columnreferencedelegate.h"
@@ -18,6 +19,8 @@
 BookView::BookView(QWidget *parent) : QTabWidget(parent)
 {
     d_ptr = new BookViewPrivate(this);
+    d_ptr->tabBar = new BookViewTabbar(this);
+    setTabBar(d_ptr->tabBar);
     
     setDocumentMode(true);
     setTabPosition(TabPosition::South);
@@ -27,6 +30,7 @@ BookView::BookView(QWidget *parent) : QTabWidget(parent)
 
 BookView::~BookView()
 {
+    delete d_ptr->tabBar;
     delete d_ptr;
 }
 
@@ -63,13 +67,17 @@ bool BookView::loadBook(const QString& path)
     if (!d_ptr->book.load())
         return false;
 
+    TableModel* model;
+    TableView* viewTable;
     auto tableIDs = d_ptr->book.tableIDs();
     for (auto i=tableIDs.cbegin(); i!=tableIDs.cend(); i++)
     {
-        // Bind the model with a view
-        TableView* viewTable = new TableView(this);
-        viewTable->setModel(d_ptr->book.table(*i));
-        d_ptr->bindTableView(viewTable);
+        model = d_ptr->book.table(*i);
+        d_ptr->bindTableModel(model);
+
+        viewTable = new TableView(this);
+        d_ptr->bindTableView(viewTable, model);
+        viewTable->scrollToBottom();
         addTab(viewTable, d_ptr->book.tableName(*i));
     }
 
@@ -91,8 +99,7 @@ bool BookView::loadDefaultBook()
     newTable->newRow();
 
     TableView* viewTable = new TableView(this);
-    viewTable->setModel(newTable);
-    d_ptr->bindTableView(viewTable);
+    d_ptr->bindTableView(viewTable, newTable);
     addTab(viewTable, newTableName);
     return true;
 }
@@ -250,8 +257,7 @@ bool BookView::columnToTable()
     d_ptr->bindTableModel(newTable);
 
     TableView* viewTable = new TableView(this);
-    viewTable->setModel(newTable);
-    d_ptr->bindTableView(viewTable);
+    d_ptr->bindTableView(viewTable, newTable);
     addTab(viewTable, tableName);
     setCurrentWidget(viewTable);
 
@@ -320,8 +326,7 @@ bool BookView::addTable()
     d_ptr->bindTableModel(newTable);
 
     TableView* viewTable = new TableView(this);
-    viewTable->setModel(newTable);
-    d_ptr->bindTableView(viewTable);
+    d_ptr->bindTableView(viewTable, newTable);
     addTab(viewTable, newName);
     setCurrentWidget(viewTable);
 
@@ -375,8 +380,7 @@ bool BookView::duplicateTable()
     d_ptr->bindTableModel(newTable);
 
     TableView* viewTable = new TableView(this);
-    viewTable->setModel(newTable);
-    d_ptr->bindTableView(viewTable);
+    d_ptr->bindTableView(viewTable, newTable);
     addTab(viewTable, newName);
     setCurrentWidget(viewTable);
 
@@ -562,12 +566,9 @@ BookViewPrivate::BookIndex BookViewPrivate::getCurrentIndex()
     return lastIndex;
 }
 
-void BookViewPrivate::bindTableView(TableView* table)
+void BookViewPrivate::bindTableView(TableView* table, TableModel* model)
 {
-    TableModel* model = dynamic_cast<TableModel*>(table->model());
-    if (!model)
-        return;
-
+    table->setModel(model);
     table->setID(model->ID);
     table->setItemDelegate(referenceDelegate);
 

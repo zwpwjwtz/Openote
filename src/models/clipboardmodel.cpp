@@ -146,7 +146,7 @@ void ClipboardModel::copy(const std::vector<int>& intList)
         operator delete[](dataList);
 
     currentType = IntegerList;
-    dataListLength = sizeof(char) * intList.size();
+    dataListLength = sizeof(int) * intList.size();
     dataList = operator new[](dataListLength);
     memcpy(dataList, intList.data(), dataListLength);
 }
@@ -184,13 +184,11 @@ std::string ClipboardModel::pasteAsString()
 #ifdef QT_GUI_LIB
     return QGuiApplication::clipboard()->text().toStdString();
 #else
-    std::string value;
     if (dataList != nullptr)
-    {
-        value.assign(std::string(reinterpret_cast<char*>(dataList),
-                                 dataListLength / sizeof(char)));
-    }
-    return value;
+        return std::string(reinterpret_cast<char*>(dataList),
+                           dataListLength / sizeof(char));
+    else
+        return "";
 #endif
 }
 
@@ -200,7 +198,7 @@ std::vector<int> ClipboardModel::pasteAsIntList()
     if (dataList != nullptr)
     {
         int listLength = int(dataListLength / sizeof(int));
-        valueList.reserve(listLength);
+        valueList.resize(listLength);
         memcpy(valueList.data(), dataList, listLength * sizeof(int));
     }
     return valueList;
