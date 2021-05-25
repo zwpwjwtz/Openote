@@ -26,6 +26,7 @@ ColumnReferenceSelector::~ColumnReferenceSelector()
 
 void ColumnReferenceSelector::focusInEvent(QFocusEvent* event)
 {
+    Q_UNUSED(event)
     ui->textSearch->setFocus();
 }
 

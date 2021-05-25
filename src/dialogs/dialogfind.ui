@@ -83,7 +83,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>A&amp;ll tables</string>
+        <string>&amp;All tables</string>
        </property>
       </widget>
      </item>

@@ -9,10 +9,11 @@ class ColumnReferenceSelector;
 
 class ColumnReferenceDelegate : public QItemDelegate
 {
+    Q_OBJECT
 public:
     BookModel* book;
 
-    ColumnReferenceDelegate();
+    explicit ColumnReferenceDelegate(QObject* parent = nullptr);
 
     virtual QWidget* createEditor(QWidget *parent,
                                   const QStyleOptionViewItem& option,

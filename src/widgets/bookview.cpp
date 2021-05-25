@@ -369,7 +369,8 @@ bool BookView::duplicateTable()
     QString newName = QInputDialog::getText(this, tr("Duplicate a table"),
                                             tr("New table name:"),
                                             QLineEdit::Normal,
-                                            QString(oldName).append("Copy"));
+                                            QString(tr("%1_copy"))
+                                                   .arg(oldName));
     if (newName.isEmpty())
         return false;
 
@@ -702,19 +703,19 @@ void BookViewPrivate::findText(QString text, bool forward, bool inAllTables)
     {
         tableIndex = table->index(searchIndex.row, searchIndex.column);
         if (table->data(tableIndex, Qt::DisplayRole).toString().contains(text))
-            QMessageBox::information(q_ptr, "One match found",
-                                     "The searched text was found "
-                                     "in only one item.");
+            QMessageBox::information(q_ptr, tr("One match found"),
+                                     tr("The searched text was found "
+                                     "in only one item."));
         else
         {
             if (inAllTables)
                 QMessageBox::information(q_ptr, tr("No matched item"),
-                                         "The searched text was not found "
-                                         "in any tables.");
+                                         tr("The searched text was not found "
+                                         "in any tables."));
             else
                 QMessageBox::information(q_ptr, tr("No matched item"),
-                                         "The searched text was not found "
-                                         "in the current table.");
+                                         tr("The searched text was not found "
+                                         "in the current table."));
         }
     }
 }

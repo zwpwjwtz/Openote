@@ -9,7 +9,8 @@
 #define OPENOTE_DELEGATE_EDITOR_PROP_COL   "column-id"
 
 
-ColumnReferenceDelegate::ColumnReferenceDelegate()
+ColumnReferenceDelegate::ColumnReferenceDelegate(QObject* parent) :
+    QItemDelegate (parent)
 {}
 
 QWidget*
@@ -148,8 +149,6 @@ void ColumnReferenceDelegate::updateEditorGeometry(QWidget *editor,
     QWidget* parent = dynamic_cast<QWidget*>(listEditor->parent());
     if (parent)
     {
-        if (parent->width() < x + editor->width())
-            x = parent->height() - editor->width();
         if (parent->height() < y + editor->height())
             y = parent->height() - editor->height();
     }
