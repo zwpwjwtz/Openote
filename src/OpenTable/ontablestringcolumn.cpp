@@ -1,4 +1,5 @@
 #include <climits>
+#include <cstdlib>
 #include <cstring>
 #include "ontablestringcolumn.h"
 #include "ontablecolumn_p.h"

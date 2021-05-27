@@ -19,7 +19,6 @@
 BookView::BookView(QWidget *parent) : QTabWidget(parent)
 {
     d_ptr = new BookViewPrivate(this);
-    d_ptr->tabBar = new BookViewTabbar(this);
     setTabBar(d_ptr->tabBar);
     
     setDocumentMode(true);
@@ -30,7 +29,6 @@ BookView::BookView(QWidget *parent) : QTabWidget(parent)
 
 BookView::~BookView()
 {
-    delete d_ptr->tabBar;
     delete d_ptr;
 }
 
@@ -525,10 +523,11 @@ BookViewPrivate::BookViewPrivate(BookView* parent)
     actionDispatcher->setMenu(contextMenu);
     referenceDelegate = new ColumnReferenceDelegate();
     referenceDelegate->book = &book;
+    tabBar = new BookViewTabbar(q_ptr);
 
     connect(q_ptr, SIGNAL(currentChanged(int)),
             this, SLOT(onTabCurrentIndexChanged(int)));
-    connect(q_ptr->tabBar(), SIGNAL(tabBarDoubleClicked(int)),
+    connect(tabBar, SIGNAL(tabBarDoubleClicked(int)),
             this, SLOT(onTabBarDoubleClicked(int)));
 }
 
@@ -540,6 +539,7 @@ BookViewPrivate::~BookViewPrivate()
     delete dialogColumnAdd;
     delete dialogFind;
     delete referenceDelegate;
+    delete tabBar;
 }
 
 int BookViewPrivate::getTableID(int tableIndex) const

@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <cstring>
 #include "ontabledoublecolumn.h"
 #include "ontablecolumn_p.h"

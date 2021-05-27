@@ -319,9 +319,9 @@ void BookModelPrivate::removeDuplicate(std::list<T>& valueList,
                                        QMap<int, int>& indexMap)
 {
     int index = 0;
-    std::_List_iterator<T> i;
-    std::_List_const_iterator<T> pos;
-    for (i=valueList.begin(); i!=valueList.end(); )
+    typename std::list<T>::iterator i;
+    typename std::list<T>::const_iterator pos;
+    for (auto i=valueList.begin(); i!=valueList.end(); )
     {
         pos = std::find(valueList.begin(), i, *i);
         if (pos == i)
