@@ -628,5 +628,58 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
         <source>Rename Row</source>
         <translation>重命名行</translation>
     </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="88"/>
+        <source>%1 - Openote</source>
+        <translation>%1 - Openote</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="94"/>
+        <location filename="../mainwindow.cpp" line="121"/>
+        <location filename="../mainwindow.cpp" line="134"/>
+        <location filename="../mainwindow.cpp" line="202"/>
+        <source>File not saved</source>
+        <translation>文件未保存</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="95"/>
+        <source>The file has been modified but not saved.
+Do you want to save it before leave?</source>
+        <translation>您已修改文件内容，但尚未保存文件。
+是否在离开之前保存它？</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="122"/>
+        <source>The selected path is not valid!
+Please select a directory for saving.</source>
+        <translation>所选路径无效！请选择一个文件夹作为保存路径。</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="135"/>
+        <location filename="../mainwindow.cpp" line="203"/>
+        <source>An error occured when saving the file.</source>
+        <translation>保存文件时出错。</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="157"/>
+        <source>Untitled</source>
+        <translation>无标题</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="176"/>
+        <source>Failed opening file</source>
+        <translation>打开文件失败</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="177"/>
+        <source>An error occurred when opening file %1</source>
+        <translation>打开文件 %1 时出错</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="117"/>
+        <location filename="../mainwindow.cpp" line="191"/>
+        <source>Save as a directory</source>
+        <translation>另存为文件夹</translation>
+    </message>
 </context>
 </TS>

@@ -83,12 +83,17 @@ void MainWindow::closeEvent(QCloseEvent* event)
     }
 }
 
+void MainWindow::setWindowTitle(const QString& newTitle)
+{
+    QWidget::setWindowTitle(QString(tr("%1 - Openote")).arg(newTitle));
+}
+
 bool MainWindow::sureToLeave()
 {
     QMessageBox::StandardButton choice =
-            QMessageBox::question(this, "File not saved",
-                                  "The file has been modified but not saved.\n"
-                                  "Do you want to save it before leave?",
+            QMessageBox::question(this, tr("File not saved"),
+                                  tr("The file has been modified but not saved."
+                                  "\nDo you want to save it before leave?"),
                                   QMessageBox::Yes | QMessageBox::No |
                                   QMessageBox::Cancel);
 
@@ -109,13 +114,13 @@ bool MainWindow::saveBook(QString path)
         if (path.isEmpty())
         {
             path = QFileDialog::getExistingDirectory(this,
-                                                     "Save as a directory",
+                                                     tr("Save as a directory"),
                                                      lastDirectory);
             if (path.isEmpty())
             {
-                QMessageBox::warning(this, "File not saved",
-                                     "The selected path is not valid!\n"
-                                     "Please select a directory for saving.");
+                QMessageBox::warning(this, tr("File not saved"),
+                                     tr("The selected path is not valid!\n"
+                                     "Please select a directory for saving."));
                 return false;
             }
         }
@@ -126,8 +131,8 @@ bool MainWindow::saveBook(QString path)
         return true;
     }
 
-    QMessageBox::critical(this, "File not saved",
-                          "An error occured when saving the file.");
+    QMessageBox::critical(this, tr("File not saved"),
+                          tr("An error occured when saving the file."));
     if (oldPath.isEmpty())
         bookWidget->setPath(oldPath);
     return false;
@@ -149,7 +154,7 @@ void MainWindow::on_actionFileNew_triggered()
         return;
 
     bookWidget->loadDefaultBook();
-    setWindowTitle("Untitled - Openote");
+    setWindowTitle(tr("Untitled"));
 }
 
 void MainWindow::on_actionFileOpen_triggered()
@@ -165,11 +170,12 @@ void MainWindow::on_actionFileOpen_triggered()
     {
         lastDirectory = path;
         QFileInfo file(path);
-        setWindowTitle(QString("%1 - Openote").arg(file.fileName()));
+        setWindowTitle(file.fileName());
     }
     else
-        QMessageBox::critical(this, "Failed opening file",
-                              QString("An error occurred when opening file %1")
+        QMessageBox::critical(this, tr("Failed opening file"),
+                              QString(tr("An error occurred when opening "
+                                         "file %1"))
                                      .arg(path));
 }
 
@@ -181,7 +187,8 @@ void MainWindow::on_actionFileSave_triggered()
 void MainWindow::on_actionFileSaveAs_triggered()
 {
     QString oldPath = bookWidget->currentPath();
-    QString path = QFileDialog::getExistingDirectory(this, "Save as a directory",
+    QString path = QFileDialog::getExistingDirectory(this,
+                                                     tr("Save as a directory"),
                                                      lastDirectory);
     if (path.isEmpty())
         return;
@@ -192,8 +199,8 @@ void MainWindow::on_actionFileSaveAs_triggered()
         return;
     }
 
-    QMessageBox::critical(this, "File not saved",
-                          "An error occured when saving the file.");
+    QMessageBox::critical(this, tr("File not saved"),
+                          tr("An error occured when saving the file."));
     if (oldPath.isEmpty())
         bookWidget->setPath(oldPath);
 }
