@@ -35,6 +35,10 @@ void TableView::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Down:
         case Qt::Key_Left:
         case Qt::Key_Right:
+        case Qt::Key_Home:
+        case Qt::Key_End:
+        case Qt::Key_PageUp:
+        case Qt::Key_PageDown:
         case Qt::Key_Tab:
             QTableView::keyPressEvent(event);
         default:;
