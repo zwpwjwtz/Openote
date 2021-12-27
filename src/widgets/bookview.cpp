@@ -561,7 +561,7 @@ int BookViewPrivate::getTableIndex(int tableID) const
         return int(index - tableIDList.cbegin());
 }
 
-BookViewPrivate::BookIndex BookViewPrivate::getCurrentIndex()
+BookIndex BookViewPrivate::getCurrentIndex()
 {
     onTabCurrentIndexChanged(q_ptr->currentIndex());
     return lastIndex;
@@ -602,7 +602,8 @@ bool BookViewPrivate::setColumnHeader(const QString &text,
     return true;
 }
 
-void BookViewPrivate::findText(QString text, bool forward, bool inAllTables)
+void BookViewPrivate::findText(QString text, bool caseSensitive,
+                               bool forward, bool inAllTables)
 {
     BookIndex lastIndex = getCurrentIndex();
     if (!lastIndex.isValid())
@@ -611,112 +612,34 @@ void BookViewPrivate::findText(QString text, bool forward, bool inAllTables)
             lastIndex.table = q_ptr->currentIndex();
         lastIndex.column = lastIndex.row = 0;
     }
-    BookIndex searchIndex = lastIndex;
 
-    // Find text in the following order: row->column->table
-    bool found = false;
-    TableModel* table = book.table(getTableID(searchIndex.table));
-    QModelIndex tableIndex;
-    int rowCount = table->countRow();
-    int columnCount = table->countColumn();
-    while (true)
+    BookIndex foundIndex =
+                book.find(text, lastIndex, forward, inAllTables, caseSensitive);
+    if (foundIndex.isValid())
     {
-        if (forward)
-        {
-            // Advance to the next row
-            searchIndex.row++;
-            if (searchIndex.row >= rowCount)
-            {
-                // Step into the next column
-                searchIndex.row = 0;
-                searchIndex.column++;
-            }
-            if (searchIndex.column >= columnCount)
-            {
-                searchIndex.column = 0;
-                if (inAllTables)
-                {
-                    // Step into the next table
-                    searchIndex.table++;
-                    if (searchIndex.table >= q_ptr->count())
-                        searchIndex.table = 0;
-
-                    table = book.table(getTableID(searchIndex.table));
-                    rowCount = table->countRow();
-                    columnCount = table->countColumn();
-                }
-            }
-        }
-        else
-        {
-            // Regress to the previous row
-            searchIndex.row--;
-            if (searchIndex.row < 0)
-            {
-                // Step back to the previous column
-                searchIndex.row = rowCount - 1;
-                searchIndex.column--;
-            }
-            if (searchIndex.column < 0)
-            {
-                searchIndex.column = columnCount - 1;
-                if (inAllTables)
-                {
-                    // Step back to the previous table
-                    searchIndex.table++;
-                    if (searchIndex.table >= q_ptr->count())
-                        searchIndex.table = 0;
-
-                    table = book.table(getTableID(searchIndex.table));
-                    rowCount = table->countRow();
-                    columnCount = table->countColumn();
-
-                    searchIndex.column = columnCount - 1;
-                    searchIndex.row = rowCount - 1;
-                }
-            }
-        }
-
-        if (searchIndex == lastIndex)
-        {
-            // Reach the starting position: no match found
-            break;
-        }
-
-        // Compare the displayed content of the grid with searched text
-        tableIndex = table->index(searchIndex.row, searchIndex.column);
-        if (table->data(tableIndex, Qt::DisplayRole).toString().contains(text))
-        {
-            found = true;
-            break;
-        }
-    }
-    if (found)
-    {
-        q_ptr->setCurrentIndex(searchIndex.table);
-        dynamic_cast<TableView*>(q_ptr->widget(searchIndex.table))
-                                            ->setCurrentIndex(tableIndex);
-        lastIndex = searchIndex;
-        dialogFind->activateWindow();
-    }
-    else
-    {
-        tableIndex = table->index(searchIndex.row, searchIndex.column);
-        if (table->data(tableIndex, Qt::DisplayRole).toString().contains(text))
+        q_ptr->setCurrentIndex(foundIndex.table);
+        if (lastIndex == foundIndex)
             QMessageBox::information(q_ptr, tr("One match found"),
                                      tr("The searched text was found "
                                      "in only one item."));
         else
         {
-            if (inAllTables)
-                QMessageBox::information(q_ptr, tr("No matched item"),
-                                         tr("The searched text was not found "
-                                         "in any tables."));
-            else
-                QMessageBox::information(q_ptr, tr("No matched item"),
-                                         tr("The searched text was not found "
-                                         "in the current table."));
+            dynamic_cast<TableView*>(q_ptr->widget(foundIndex.table))
+                                          ->setCurrentIndex(foundIndex.row,
+                                                            foundIndex.column);
+            dialogFind->activateWindow();
         }
+    }
+    else
+    {
+        if (inAllTables)
+            QMessageBox::information(q_ptr, tr("No matched item"),
+                                     tr("The searched text was not found "
+                                        "in any tables."));
+        else
+            QMessageBox::information(q_ptr, tr("No matched item"),
+                                     tr("The searched text was not found "
+                                        "in the current table."));
     }
 }
 
@@ -814,7 +737,8 @@ void BookViewPrivate::onDialogColumnAddFinished(int result)
 
 void BookViewPrivate::onDialogFindStart(QString text)
 {
-    findText(text, !dialogFind->backward(), dialogFind->findInAllTables());
+    findText(text, dialogFind->caseSensitive(),
+             !dialogFind->backward(), dialogFind->findInAllTables());
 }
 
 void BookViewPrivate::onTableDataChanged()

@@ -16,6 +16,8 @@ public:
     int ID() const;
     void setID(int ID);
 
+    void setCurrentIndex(int row, int column);
+
 protected:
     void keyPressEvent(QKeyEvent* event);
     void mousePressEvent(QMouseEvent* event);

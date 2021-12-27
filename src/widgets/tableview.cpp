@@ -66,3 +66,8 @@ void TableView::setID(int ID)
     else
         tableID = 0;
 }
+
+void TableView::setCurrentIndex(int row, int column)
+{
+    QTableView::setCurrentIndex(model()->index(row, column));
+}

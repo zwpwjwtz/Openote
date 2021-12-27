@@ -8,6 +8,19 @@
 class TableModel;
 class BookModelPrivate;
 
+struct BookIndex
+{
+    int table = -1;
+    int column = -1;
+    int row = -1;
+    bool operator ==(const BookIndex& src)
+    { return table == src.table && column == src.column && row == src.row; }
+    bool isValid()
+    { return table >= 0 && column >= 0 && row >= 0; }
+    void reset()
+    { table = column = row = -1; }
+};
+
 class BookModel : public QObject, protected ONBook
 {
     Q_OBJECT
@@ -38,6 +51,12 @@ public:
 
     bool load();
     bool save();
+
+    BookIndex find(QString text,
+                   BookIndex startIndex,
+                   bool forward = true,
+                   bool inAllTables = true,
+                   bool caseSensitive = false);
 
 protected:
     BookModelPrivate* d;

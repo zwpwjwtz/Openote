@@ -13,9 +13,9 @@
   <property name="windowTitle">
    <string>Find</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout" stretch="1,1,0">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="1,1,0,0">
    <property name="spacing">
-    <number>0</number>
+    <number>3</number>
    </property>
    <property name="topMargin">
     <number>0</number>
@@ -84,6 +84,33 @@
        </property>
        <property name="text">
         <string>&amp;All tables</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_10">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="labelOption">
+       <property name="text">
+        <string>Option: </string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkCaseSensitive">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Case sensitive</string>
        </property>
       </widget>
      </item>

@@ -285,6 +285,99 @@ bool BookModel::save()
     return ONBook::save();
 }
 
+BookIndex BookModel::find(QString text, BookIndex startIndex,
+                          bool forward, bool inAllTables, bool caseSensitive)
+{
+    BookIndex searchIndex = startIndex;
+
+    // Find text in the following order: row->column->table
+    bool found = false;
+    QList<int> tableIDList = tableIDs();
+    TableModel* currentTable = table(tableIDList[searchIndex.table]);
+    QModelIndex tableIndex;
+    int rowCount = currentTable->countRow();
+    int columnCount = currentTable->countColumn();
+    Qt::CaseSensitivity caseSensitivity = caseSensitive ?
+                                          Qt::CaseSensitivity::CaseSensitive :
+                                          Qt::CaseSensitivity::CaseInsensitive;
+    while (true)
+    {
+        if (forward)
+        {
+            // Advance to the next row
+            searchIndex.row++;
+            if (searchIndex.row >= rowCount)
+            {
+                // Step into the next column
+                searchIndex.row = 0;
+                searchIndex.column++;
+            }
+            if (searchIndex.column >= columnCount)
+            {
+                searchIndex.column = 0;
+                if (inAllTables)
+                {
+                    // Step into the next table
+                    searchIndex.table++;
+                    if (searchIndex.table >= tableCount())
+                        searchIndex.table = 0;
+
+                    currentTable = table(tableIDList[searchIndex.table]);
+                    rowCount = currentTable->countRow();
+                    columnCount = currentTable->countColumn();
+                }
+            }
+        }
+        else
+        {
+            // Regress to the previous row
+            searchIndex.row--;
+            if (searchIndex.row < 0)
+            {
+                // Step back to the previous column
+                searchIndex.row = rowCount - 1;
+                searchIndex.column--;
+            }
+            if (searchIndex.column < 0)
+            {
+                searchIndex.column = columnCount - 1;
+                if (inAllTables)
+                {
+                    // Step back to the previous table
+                    searchIndex.table++;
+                    if (searchIndex.table >= tableCount())
+                        searchIndex.table = 0;
+
+                    currentTable = table(tableIDList[searchIndex.table]);
+                    rowCount = currentTable->countRow();
+                    columnCount = currentTable->countColumn();
+
+                    searchIndex.column = columnCount - 1;
+                    searchIndex.row = rowCount - 1;
+                }
+            }
+        }
+
+        // Compare the displayed content of the grid with searched text
+        tableIndex = currentTable->index(searchIndex.row, searchIndex.column);
+        if (currentTable->data(tableIndex, Qt::DisplayRole)
+                        .toString().contains(text, caseSensitivity))
+        {
+            found = true;
+            break;
+        }
+
+        if (searchIndex == startIndex)
+        {
+            // Reach the starting position: no match found
+            searchIndex.reset();
+            break;
+        }
+    }
+
+    return searchIndex;
+}
+
 void BookModel::onTableColumnAdded(int tableID, int columnID, int referenceID)
 {
     if (referenceID > 0)

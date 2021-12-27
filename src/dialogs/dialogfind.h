@@ -16,6 +16,7 @@ public:
     ~DialogFind();
 
     bool backward() const;
+    bool caseSensitive() const;
     bool findInAllTables() const;
 
 signals:
@@ -30,9 +31,12 @@ private slots:
     void on_buttonNext_clicked();
     void on_buttonPrevious_clicked();
 
+    void on_checkCaseSensitive_stateChanged(int arg1);
+
 private:
     Ui::DialogFind *ui;
     bool backwardFinding;
+    bool caseSensitiveFinding;
 };
 
 #endif // DIALOGFIND_H

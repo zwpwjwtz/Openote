@@ -5,7 +5,6 @@
 #include "models/bookmodel.h"
 
 
-class BookModel;
 class ClipboardModel;
 class TableView;
 class ColumnReferenceDelegate;
@@ -21,17 +20,6 @@ class BookViewPrivate : public QObject
 {
     Q_OBJECT
 public:
-    struct BookIndex
-    {
-        int table = -1;
-        int column = -1;
-        int row = -1;
-        bool operator ==(const BookIndex& src)
-        { return table == src.table && column == src.column && row == src.row; }
-        bool isValid()
-        { return table >= 0 && column >= 0 && row >= 0; }
-    };
-
     bool isModified;
     BookModel book;
     BookViewTabbar* tabBar;
@@ -50,7 +38,8 @@ public:
     QString columnHeader(int tableIndex, int columnIndex) const;
     bool setColumnHeader(const QString& text, int tableIndex, int columnIndex);
     
-    void findText(QString text, bool forward, bool inAllTables);
+    void findText(QString text, bool caseSensitive,
+                  bool forward, bool inAllTables);
 
     ClipboardModel* getClipboard();
     BookContextMenu* getContextMenu();
