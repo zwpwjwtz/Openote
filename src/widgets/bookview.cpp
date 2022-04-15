@@ -67,7 +67,7 @@ bool BookView::loadBook(const QString& path)
 
     TableModel* model;
     TableView* viewTable;
-    auto tableIDs = d_ptr->book.tableIDs();
+    auto tableIDs = d_ptr->book.tableIDList();
     for (auto i=tableIDs.cbegin(); i!=tableIDs.cend(); i++)
     {
         model = d_ptr->book.table(*i);
@@ -76,7 +76,7 @@ bool BookView::loadBook(const QString& path)
         viewTable = new TableView(this);
         d_ptr->bindTableView(viewTable, model);
         viewTable->scrollToBottom();
-        addTab(viewTable, d_ptr->book.tableName(*i));
+        addTab(viewTable, d_ptr->book.getTableName(*i));
     }
 
     return true;
@@ -162,9 +162,9 @@ bool BookView::addColumn()
     {
         dialog->enableReference = true;
         dialog->referenceList.clear();
-        auto tableIDs = d_ptr->book.tableIDs();
+        auto tableIDs = d_ptr->book.tableIDList();
         for (auto i=tableIDs.cbegin(); i!=tableIDs.cend(); i++)
-            dialog->referenceList.push_back(d_ptr->book.tableName(*i));
+            dialog->referenceList.push_back(d_ptr->book.getTableName(*i));
     }
 
     dialog->open();
@@ -198,7 +198,7 @@ bool BookView::duplicateColumn()
         return false;
 
     TableModel* table = d_ptr->book.table(d_ptr->getTableID(index.table));
-    if (table->duplicateColumn(index.column, newName))
+    if (table->duplicateColumn(index.column, newName.toStdString()))
     {
 
         d_ptr->isModified = true;
@@ -341,7 +341,7 @@ bool BookView::deleteTable()
     int tableID = d_ptr->getTableID(index.table);
     if (QMessageBox::warning(this, tr("Delete a table"),
                              QString(tr("Are you sure to delete table %1 ?"))
-                                    .arg(d_ptr->book.tableName(tableID)),
+                                    .arg(d_ptr->book.getTableName(tableID)),
                              QMessageBox::Yes | QMessageBox::No)
             != QMessageBox::Yes)
         return false;
@@ -363,7 +363,7 @@ bool BookView::duplicateTable()
         return false;
 
     int oldTableID = d_ptr->getTableID(index.table);
-    QString oldName = d_ptr->book.tableName(oldTableID);
+    QString oldName = d_ptr->book.getTableName(oldTableID);
     QString newName = QInputDialog::getText(this, tr("Duplicate a table"),
                                             tr("New table name:"),
                                             QLineEdit::Normal,
@@ -394,7 +394,7 @@ bool BookView::renameTable()
         return false;
 
     int tableID = d_ptr->getTableID(index.table);
-    QString oldName = d_ptr->book.tableName(tableID);
+    QString oldName = d_ptr->book.getTableName(tableID);
     QString newName = QInputDialog::getText(this, tr("Rename a table"),
                                             tr("New name for the table:"),
                                             QLineEdit::Normal,
@@ -553,7 +553,7 @@ int BookViewPrivate::getTableID(int tableIndex) const
 
 int BookViewPrivate::getTableIndex(int tableID) const
 {
-    auto tableIDList = book.tableIDs();
+    auto tableIDList = book.tableIDList();
     auto index = std::find(tableIDList.cbegin(), tableIDList.cend(), tableID);
     if (index == tableIDList.cend())
         return -1;
@@ -688,7 +688,7 @@ void BookViewPrivate::onDialogColumnAddFinished(int result)
     int referenceTableID;
     if (dialogColumnAdd->referring)
     {
-        auto tableIDs = book.tableIDs();
+        auto tableIDs = book.tableIDList();
         referenceTableID = tableIDs[dialogColumnAdd->referenceIndex];
         if (referenceTableID == tableID)
         {

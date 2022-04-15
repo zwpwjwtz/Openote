@@ -13,7 +13,7 @@
 
 ONBook::ONBook()
 {
-    d_ptr = new ONBookPrivate;
+    d_ptr = new ONBookPrivate(this);
 }
 
 ONBook::ONBook(ONBookPrivate* data)
@@ -62,18 +62,25 @@ ONTable* ONBook::table(int tableID) const
         return nullptr;
 }
 
-int ONBook::addTable(const std::string& tableName)
+ONTable* ONBook::newTable()
+{
+    return new ONTable;
+}
+
+ONTable* ONBook::addTable(const std::string& tableName)
 {
     // Assuming increasing ID of tables in the list
     int availableID = d_ptr->tableList.size() > 0 ?
                       d_ptr->tableList.back()->ID + 1 :
                       1;
-    d_ptr->tableList.push_back(new ONTable);
-    d_ptr->tableList.back()->ID = availableID;
+
+    ONTable* newTable = this->newTable();
+    newTable->ID = availableID;
+    d_ptr->tableList.push_back(newTable);
     d_ptr->tableIDList.push_back(availableID);
     d_ptr->tableNameList.push_back(tableName);
 
-    return availableID;
+    return newTable;
 }
 
 std::string ONBook::tableName(int tableID) const
@@ -93,11 +100,11 @@ bool ONBook::setTableName(int tableID, const std::string& newName)
         return false;
 }
 
-void ONBook::removeTable(int tableID)
+bool ONBook::removeTable(int tableID)
 {
     int index = d_ptr->getTableIndexByID(tableID);
     if (index < 0)
-        return;
+        return false;
 
     d_ptr->tableList.erase(d_ptr->tableList.begin() + index);
     d_ptr->tableIDList.erase(d_ptr->tableIDList.begin() + index);
@@ -110,6 +117,7 @@ void ONBook::removeTable(int tableID)
         else
             i++;
     }
+    return true;
 }
 
 int ONBook::columnReference(int sourceTableID, int sourceColumnID) const
@@ -294,6 +302,11 @@ bool ONBook::save()
     return true;
 }
 
+ONBookPrivate::ONBookPrivate(ONBook* parent)
+{
+    q_ptr = parent;
+}
+
 ONBookPrivate::~ONBookPrivate()
 {
     for (size_t i=0; i<tableList.size(); i++)
@@ -340,13 +353,16 @@ std::string ONBookPrivate::getTableDirectory(int tableID) const
 
 bool ONBookPrivate::loadTable(int tableID, const std::string& tableName)
 {
-    tableList.push_back(new ONTable);
-    ONTable* table = tableList.back();
+    ONTable* table = q_ptr->newTable();
     if (!(table->setBindingDirectory(getTableDirectory(tableID)) &&
           table->load()))
+    {
+        delete table;
         return false;
+    }
 
     table->ID = tableID;
+    tableList.push_back(table);
     tableIDList.push_back(tableID);
     tableNameList.push_back(tableName);
 

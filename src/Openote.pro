@@ -52,7 +52,9 @@ SOURCES += \
     widgets/columnheaderview.cpp \
     models/clipboardmodel.cpp \
     dialogs/dialogfind.cpp \
-    widgets/bookviewtabbar.cpp
+    widgets/bookviewtabbar.cpp \
+    models/basetablemodel.cpp \
+    models/basebookmodel.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -85,7 +87,12 @@ HEADERS += \
     models/clipboardmodel.h \
     dialogs/dialogfind.h \
     widgets/bookview_p.h \
-    widgets/bookviewtabbar.h
+    widgets/bookviewtabbar.h \
+    models/basetablemodel.h \
+    models/basetablemodel_p.h \
+    models/basebookmodel.h \
+    models/basebookmodel_p.h \
+    models/bookindex.h
 
 FORMS += \
     mainwindow.ui \

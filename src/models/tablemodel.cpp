@@ -1,30 +1,21 @@
 #include "tablemodel.h"
 #include "tablemodel_p.h"
 #include "bookmodel.h"
-#include "OpenTable/ontable_p.h"
-#include "OpenTable/ontableintcolumn.h"
-#include "OpenTable/ontabledoublecolumn.h"
-#include "OpenTable/ontablestringcolumn.h"
-#include "OpenTable/ontableintlistcolumn.h"
+#include "basetablemodel_p.h"
 
 
 TableModel::TableModel(QObject *parent)
     : QAbstractItemModel(parent),
-      ONTable (new TableModelPrivate())
+      BaseTableModel (new TableModelPrivate())
 {
-    d = dynamic_cast<TableModelPrivate*>(ONTable::d_ptr);
+    d = static_cast<TableModelPrivate*>(BaseTableModel::d);
 }
 
-TableModel::TableModel(const TableModel &src) :
-    QAbstractItemModel (src.QObject::parent()),
-    ONTable (new TableModelPrivate(*src.d))
+TableModel::TableModel(const TableModel &src)
+    : QAbstractItemModel (src.QObject::parent()),
+      BaseTableModel (new TableModelPrivate(*src.d))
 {
-    d = dynamic_cast<TableModelPrivate*>(ONTable::d_ptr);
-}
-
-TableModel* TableModel::clone(const TableModel& src)
-{
-    return new TableModel(src);
+    d = static_cast<TableModelPrivate*>(BaseTableModel::d);
 }
 
 QVariant TableModel::headerData(int section, Qt::Orientation orientation,
@@ -32,7 +23,7 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation,
 {
     if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
         return QVariant();
-    int columnID = ONTable::d_ptr->columnIDList[section];
+    int columnID = BaseTableModel::d_ptr->columnIDList[section];
     return QString::fromStdString(columnName(columnID));
 }
 
@@ -41,7 +32,7 @@ bool TableModel::setHeaderData(int section, Qt::Orientation orientation,
 {
     if (value != headerData(section, orientation, role))
     {
-        int columnID = ONTable::d_ptr->columnIDList[section];
+        int columnID = BaseTableModel::d_ptr->columnIDList[section];
         setColumnName(columnID, value.toString().toStdString());
         emit headerDataChanged(orientation, section, section);
         return true;
@@ -72,16 +63,6 @@ int TableModel::columnCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent)
     return countColumn();
-}
-
-int TableModel::rowID(int row) const
-{
-    return d->getRowID(row);
-}
-
-int TableModel::columnID(int column) const
-{
-    return d->columnIDList[column];
 }
 
 QVariant TableModel::data(const QModelIndex& index, int role) const
@@ -132,7 +113,8 @@ QVariant TableModel::nativeData(int rowIndex, int columnIndex) const
 QString TableModel::referenceData(int rowIndex, int columnIndex) const
 {
     QString targetValue;
-    BookModel* parentBook = dynamic_cast<BookModel*>(QAbstractItemModel::parent());
+    BookModel* parentBook =
+                    static_cast<BookModel*>(QAbstractItemModel::parent());
     if (parentBook == nullptr)
         return targetValue;
 
@@ -154,8 +136,8 @@ QString TableModel::referenceData(int rowIndex, int columnIndex) const
     }
 
     // Get the referred table
-    const TableModel* targetTable =
-                        parentBook->columnReferenceTable(ID, columnID);
+    const TableModel* targetTable = static_cast<TableModel*>
+                            (parentBook->columnReferenceTable(ID, columnID));
 
     // Use the first column in the referred table as data to display
     if (targetTable == nullptr || targetTable->d->columnIDList.size() < 1)
@@ -194,7 +176,7 @@ QString TableModel::referenceData(int rowIndex, int columnIndex) const
 
 void TableModel::clearColumn(int columnID)
 {
-    ONTable::clearColumn(columnID);
+     BaseTableModel::clearColumn(columnID);
     if (rowCount() > 0)
     {
         int columnIndex = d->getColumnIndexByID(columnID);
@@ -212,8 +194,8 @@ bool TableModel::setData(const QModelIndex& index,
 
     bool successful = true;
     int rowID = d->getRowID(index.row());
-    int columnID = ONTable::d_ptr->columnIDList[index.column()];
-    switch (ONTable::d_ptr->columnTypeIDList[index.column()])
+    int columnID = BaseTableModel::d_ptr->columnIDList[index.column()];
+    switch (BaseTableModel::d_ptr->columnTypeIDList[index.column()])
     {
         case ColumnType::Integer:
             if (readInt(rowID, columnID) != value.toInt())
@@ -262,16 +244,6 @@ bool TableModel::setData(const QModelIndex& index,
     return false;
 }
 
-bool TableModel::setColumnReference(int columnID, int referenceID)
-{
-    int columnIndex = d->getColumnIndexByID(columnID);
-    if (columnIndex < 0)
-        return false;
-
-    d->columnReferenceIDList[columnIndex] = referenceID;
-    return true;
-}
-
 Qt::ItemFlags TableModel::flags(const QModelIndex& index) const
 {
     if (!index.isValid())
@@ -311,7 +283,7 @@ int TableModel::newRow()
 {
     int rowIndex = countRow();
     beginInsertRows(QModelIndex(), rowIndex, rowIndex);
-    int rowID = ONTable::newRow();
+    int rowID = BaseTableModel::newRow();
     endInsertRows();
     return rowID;
 }
@@ -327,7 +299,7 @@ int TableModel::newColumn(const std::string &name, ColumnType columnType,
     int columnIndex = countColumn();
     beginInsertColumns(QModelIndex(), columnIndex, columnIndex);
 
-    int columnID = ONTable::newColumn(name, columnType);
+    int columnID = BaseTableModel::newColumn(name, columnType);
     d->columnReferenceIDList.push_back(referenceID);
     emit columnAdded(ID, columnID, referenceID);
 
@@ -339,84 +311,23 @@ bool TableModel::duplicateRow(int row)
 {
     int rowIndex = countRow();
     beginInsertRows(QModelIndex(), rowIndex, rowIndex);
-
-    int oldRowID = d->getRowID(row);
-    int newRowID = ONTable::newRow();
-    int columnCount = d->columnList.size();
-    for (int i=0; i<columnCount; i++)
-    {
-        ONTableColumn* column = d->columnList[i];
-        switch (d->columnTypeIDList[i])
-        {
-            case ColumnType::Integer:
-                ((ONTableIntColumn*)column)->duplicate(oldRowID, newRowID);
-                break;
-            case ColumnType::Double:
-                ((ONTableDoubleColumn*)column)->duplicate(oldRowID, newRowID);
-                break;
-            case ColumnType::String:
-                ((ONTableStringColumn*)column)->duplicate(oldRowID, newRowID);
-                break;
-            case ColumnType::IntegerList:
-                ((ONTableIntListColumn*)column)->duplicate(oldRowID, newRowID);
-                break;
-            default:;
-        }
-    }
+    bool successful = BaseTableModel::duplicateRow(row);
     endInsertRows();
-    return true;
+    return successful;
 }
 
-bool TableModel::duplicateColumn(int column, const QString& newName)
+bool TableModel::duplicateColumn(int column, const std::string& newName)
 {
     int columnIndex = countColumn();
     beginInsertColumns(QModelIndex(), columnIndex, columnIndex);
-
-    ONTableColumn* oldColumn = ONTable::d_ptr->columnList[column];
-    ONTableColumn* newColumn;
-    switch (oldColumn->typeID)
-    {
-        case ColumnType::Integer:
-            newColumn = new ONTableIntColumn(
-                            *(ONTableIntColumn*)oldColumn);
-            break;
-        case ColumnType::Double:
-            newColumn = new ONTableDoubleColumn(
-                            *(ONTableDoubleColumn*)oldColumn);
-            break;
-        case ColumnType::String:
-            newColumn = new ONTableStringColumn(
-                            *(ONTableStringColumn*)oldColumn);
-            break;
-        case ColumnType::IntegerList:
-            newColumn = new ONTableIntListColumn(
-                            *(ONTableIntListColumn*)oldColumn);
-            break;
-        default:
-            newColumn = nullptr;
-            endInsertColumns();
-            return false;
-    }
-
-    // Assuming increasing ID of column in the list
-    int availableID = d->columnList.size() > 0 ?
-                      d->columnList.back()->ID + 1 :
-                      1;
-    newColumn->ID = availableID;
-    d->columnList.push_back(newColumn);
-    d->columnIDList.push_back(availableID);
-    d->columnTypeIDList.push_back(newColumn->typeID);
-    d->columnNameList.push_back(newName.toStdString());
-    d->columnReferenceIDList.push_back(d->columnReferenceIDList[column]);
-    emit columnAdded(ID, newColumn->ID, d->columnReferenceIDList[column]);
-
+    bool successful = BaseTableModel::duplicateColumn(column, newName);
     endInsertColumns();
-    return true;
+    return successful;
 }
 
 void TableModel::clear()
 {
-    ONTable::clear();
+    BaseTableModel::clear();
     emit layoutChanged();
 }
 
@@ -429,7 +340,7 @@ bool TableModel::removeRows(int row, int count,
     for (int i=0; i<count; i++)
     {
         rowID = d->getRowID(row);
-        ONTable::removeRow(rowID);
+        BaseTableModel::removeRow(rowID);
     }
 
     endRemoveRows();
@@ -440,58 +351,15 @@ bool TableModel::removeColumns(int column, int count,
                                const QModelIndex& parent)
 {
     beginRemoveColumns(parent, column, column + count - 1);
-
-    int columnID;
     for (int i=0; i<count; i++)
-    {
-        columnID = ONTable::d_ptr->columnIDList[column];
-        ONTable::removeColumn(columnID);
-        d->columnReferenceIDList.removeAt(column);
-        emit columnRemoved(ID, columnID);
-    }
-
+        BaseTableModel::removeColumn(column + i);
     endRemoveColumns();
     return true;
 }
 
-bool TableModel::load()
-{
-    if (!ONTable::load())
-        return false;
-
-    // Initialize columnReferenceIDList with zeros
-    // These placeholders are necessary for the following
-    // loading process of BookModel, because only columns
-    // with reference can update their reference IDs in this list
-    int count = d->columnList.size();
-    d->columnReferenceIDList.reserve(count);
-    while (count-- > 0)
-        d->columnReferenceIDList.push_back(0);
-    return true;
-}
-
 TableModelPrivate::TableModelPrivate(const TableModelPrivate& src) :
-    ONTablePrivate (src)
-{
-    columnReferenceIDList = src.columnReferenceIDList;
-}
+    BaseTableModelPrivate (src)
+{}
 
-int TableModelPrivate::getRowID(int rowIndex) const
-{
-    // The order of rows are fixed and does not allow changes
-    // So just iterate over the IDList and take the ID located
-    // at index rowIndex would be fine
-    int count = 0;
-    auto i = IDList.cbegin();
-    while (i != IDList.cend())
-    {
-        if (count == rowIndex)
-            break;
-        count++;
-        i++;
-    }
-    if (i == IDList.cend())
-        return 0;
-    else
-        return *i;
-}
+TableModelPrivate::~TableModelPrivate()
+{}

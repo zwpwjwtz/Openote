@@ -20,6 +20,7 @@ public:
 
     std::string bindingDirectory;
 
+    ONBookPrivate(ONBook* parent = nullptr);
     virtual ~ONBookPrivate();
 
     virtual int getTableIndexByID(int tableID) const;
@@ -30,6 +31,9 @@ public:
     virtual bool saveTable(int tableIndex);
     virtual bool addColumnReferences(int targetTableID,
                                      const std::string& referenceMapString);
+
+protected:
+    ONBook* q_ptr;
 };
 
 #endif // ONBOOK_P_H

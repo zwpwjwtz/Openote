@@ -2,20 +2,18 @@
 #define TABLEMODEL_H
 
 #include <QAbstractItemModel>
-#include "OpenTable/ontable.h"
+#include "basetablemodel.h"
 
 
 class TableModelPrivate;
 
-class TableModel : public QAbstractItemModel, public ONTable
+class TableModel : public QAbstractItemModel, public BaseTableModel
 {
     Q_OBJECT
 
 public:
     explicit TableModel(QObject *parent = nullptr);
     TableModel(const TableModel &src);
-
-    static TableModel* clone(const TableModel &src);
 
     // Header:
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -32,9 +30,6 @@ public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
 
-    int rowID(int row) const;
-    int columnID(int column) const;
-
     QVariant data(const QModelIndex& index,
                   int role = Qt::DisplayRole) const override;
     QVariant nativeData(int rowIndex, int columnIndex) const;
@@ -44,7 +39,6 @@ public:
     void clearColumn(int columnID) override;
     bool setData(const QModelIndex& index, const QVariant& value,
                  int role = Qt::EditRole) override;
-    bool setColumnReference(int columnIndex, int referenceID);
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
@@ -58,9 +52,9 @@ public:
     int newColumn(const std::string &name, ColumnType columnType,
                   int referenceID);
 
-    // Dupliate data:
-    bool duplicateRow(int row);
-    bool duplicateColumn(int column, const QString &newName);
+    // Duplicate data:
+    bool duplicateRow(int row) override;
+    bool duplicateColumn(int column, const std::string &newName) override;
 
     // Remove data:
     void clear() override;
@@ -68,8 +62,6 @@ public:
                     const QModelIndex& parent = QModelIndex()) override;
     bool removeColumns(int column, int count,
                        const QModelIndex& parent = QModelIndex()) override;
-
-    bool load() override;
 
 protected:
     TableModelPrivate* d;
