@@ -36,7 +36,7 @@ public:
     QString referenceData(int rowIndex, int columnIndex) const;
 
     // Editable:
-    void clearColumn(int columnID) override;
+    void clearColumn(int columnIndex);
     bool setData(const QModelIndex& index, const QVariant& value,
                  int role = Qt::EditRole) override;
 
@@ -47,17 +47,17 @@ public:
                     const QModelIndex& parent = QModelIndex()) override;
     bool insertColumns(int column, int count,
                        const QModelIndex& parent = QModelIndex()) override;
-    int newRow() override;
-    int newColumn(const std::string& name, ColumnType columnType) override;
-    int newColumn(const std::string &name, ColumnType columnType,
-                  int referenceID);
+    int newRow();
+    int newColumn(const std::string& name,
+                  ColumnType columnType,
+                  int referenceID = 0);
 
     // Duplicate data:
-    bool duplicateRow(int row) override;
-    bool duplicateColumn(int column, const std::string &newName) override;
+    bool duplicateRow(int row);
+    bool duplicateColumn(int column, const std::string &newName);
 
     // Remove data:
-    void clear() override;
+    void clear();
     bool removeRows(int row, int count,
                     const QModelIndex& parent = QModelIndex()) override;
     bool removeColumns(int column, int count,
@@ -65,10 +65,6 @@ public:
 
 protected:
     TableModelPrivate* d;
-
-signals:
-    void columnAdded(int tableID, int columnID, int referenceID);
-    void columnRemoved(int tableID, int columnID);
 };
 
 #endif // TABLEMODEL_H

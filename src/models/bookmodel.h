@@ -25,18 +25,17 @@ public:
     bool setPath(const QString& path);
 
     int tableCount() const;
-    QList<int> tableIDList() const;
-    TableModel* table(int tableID) const;
+    TableModel* table(int tableIndex) const;
     TableModel* addTable(const QString& tableName);
-    TableModel* convertColumnToTable(BaseTableModel* sourceTable,
-                                     int sourceColumnID,
+    TableModel* convertColumnToTable(int sourceTableIndex,
+                                     int sourceColumnIndex,
                                      const QString& newTableName);
-    TableModel* duplicateTable(int tableID, const QString& newName);
-    TableModel* columnReferenceTable(int sourceTableID, int sourceColumnID);
-    bool removeTable(int tableID);
+    TableModel* duplicateTable(int tableIndex, const QString& newName);
+    TableModel* columnReferenceTable(int sourceTableID, int sourceColumnIndex);
+    bool removeTable(int tableIndex);
 
-    QString getTableName(int tableID) const;
-    bool setTableName(int tableID, const QString& newName);
+    QString getTableName(int tableIndex) const;
+    bool setTableName(int tableIndex, const QString& newName);
 
     BookIndex find(QString text,
                    BookIndex startIndex,

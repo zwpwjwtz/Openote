@@ -12,29 +12,29 @@ public:
     ONBook();
     virtual ~ONBook();
 
-    virtual int count() const;
-    virtual bool exists(int tableID) const;
-    virtual std::vector<int> tableIDs() const;
+    int count() const;
+    bool exists(int tableID) const;
+    std::vector<int> tableIDs() const;
 
-    virtual void clear();
+    void clear();
 
-    virtual ONTable* table(int tableID) const;
+    ONTable* table(int tableID) const;
     virtual ONTable* newTable();
-    virtual ONTable* addTable(const std::string& tableName);
-    virtual bool removeTable(int tableID);
+    ONTable* addTable(const std::string& tableName);
+    bool removeTable(int tableID);
 
-    virtual std::string tableName(int tableID) const;
-    virtual bool setTableName(int tableID, const std::string& newName);
+    std::string tableName(int tableID) const;
+    bool setTableName(int tableID, const std::string& newName);
 
-    virtual int columnReference(int sourceTableID, int sourceColumnID) const;
-    virtual bool setColumnReference(int sourceTableID,
+    int columnReference(int sourceTableID, int sourceColumnID) const;
+    bool setColumnReference(int sourceTableID,
                                     int sourceColumnID,
                                     int targetTableID);
-    virtual void removeColumnReference(int sourceTableID, int sourceColumnID);
+    void removeColumnReference(int sourceTableID, int sourceColumnID);
 
-    virtual std::string bindingDirectory() const;
-    virtual bool setBindingDirectory(const std::string& path);
-    virtual void clearBindingDirectory();
+    std::string bindingDirectory() const;
+    bool setBindingDirectory(const std::string& path);
+    void clearBindingDirectory();
 
     virtual bool load();
     virtual bool save();

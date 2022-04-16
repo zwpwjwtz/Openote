@@ -46,18 +46,12 @@ bool BookModel::setPath(const QString& path)
 
 int BookModel::tableCount() const
 {
-    return d_ptr->tableCount();
+    return d_ptr->count();
 }
 
-QList<int> BookModel::tableIDList() const
+TableModel* BookModel::table(int tableIndex) const
 {
-    auto IDList(d_ptr->tableIDs());
-    return QList<int>(IDList.cbegin(), IDList.cend());
-}
-
-TableModel* BookModel::table(int tableID) const
-{
-    return static_cast<TableModel*>(d_ptr->table(tableID));
+    return static_cast<TableModel*>(d_ptr->table(tableIndex));
 }
 
 TableModel* BookModel::addTable(const QString& tableName)
@@ -65,42 +59,46 @@ TableModel* BookModel::addTable(const QString& tableName)
     return static_cast<TableModel*>(d_ptr->addTable(tableName.toStdString()));
 }
 
-TableModel* BookModel::convertColumnToTable(BaseTableModel* sourceTable,
-                                            int sourceColumnID,
+TableModel* BookModel::convertColumnToTable(int sourceTableIndex,
+                                            int sourceColumnIndex,
                                             const QString& newTableName)
 {
+    auto sourceTable = d_ptr->table(sourceTableIndex);
+    if (sourceTable == nullptr)
+        return nullptr;
+
     return static_cast<TableModel*>
-                (d_ptr->convertColumnToTable(sourceTable,
-                                             sourceColumnID,
-                                             newTableName.toStdString()));
+                    (d_ptr->convertColumnToTable(sourceTable,
+                                                 sourceColumnIndex,
+                                                 newTableName.toStdString()));
 }
 
-TableModel* BookModel::duplicateTable(int tableID, const QString& newName)
-{
-    return static_cast<TableModel*>
-                (d_ptr->duplicateTable(tableID, newName.toStdString()));
-}
-
-TableModel* BookModel::columnReferenceTable(int sourceTableID, int
-                                            sourceColumnID)
+TableModel* BookModel::duplicateTable(int tableIndex, const QString& newName)
 {
     return static_cast<TableModel*>
-                (d_ptr->columnReferenceTable(sourceTableID, sourceColumnID));
+                (d_ptr->duplicateTable(tableIndex, newName.toStdString()));
 }
 
-bool BookModel::removeTable(int tableID)
+TableModel* BookModel::columnReferenceTable(int sourceTableID,
+                                            int sourceColumnIndex)
 {
-    return d_ptr->removeTable(tableID);
+    return static_cast<TableModel*>
+            (d_ptr->columnReferenceTable(sourceTableID, sourceColumnIndex));
 }
 
-QString BookModel::getTableName(int tableID) const
+bool BookModel::removeTable(int tableIndex)
 {
-    return QString::fromStdString(d_ptr->tableName(tableID));
+    return d_ptr->removeTable(tableIndex);
 }
 
-bool BookModel::setTableName(int tableID, const QString& newName)
+QString BookModel::getTableName(int tableIndex) const
 {
-    return d_ptr->setTableName(tableID, newName.toStdString());
+    return QString::fromStdString(d_ptr->tableName(tableIndex));
+}
+
+bool BookModel::setTableName(int tableIndex, const QString& newName)
+{
+    return d_ptr->setTableName(tableIndex, newName.toStdString());
 }
 
 BookIndex BookModel::find(QString text, BookIndex startIndex,
@@ -110,10 +108,7 @@ BookIndex BookModel::find(QString text, BookIndex startIndex,
 
     // Find text in the following order: row->column->table
     bool found = false;
-    auto tempTableIDs = tableIDList();
-    QList<int> tableIDList(tempTableIDs.cbegin(), tempTableIDs.cend());
-    TableModel* currentTable = static_cast<TableModel*>
-                                        (table(tableIDList[searchIndex.table]));
+    TableModel* currentTable = static_cast<TableModel*>(table(searchIndex.table));
     QModelIndex tableIndex;
     int rowCount = currentTable->countRow();
     int columnCount = currentTable->countColumn();
@@ -142,8 +137,8 @@ BookIndex BookModel::find(QString text, BookIndex startIndex,
                     if (searchIndex.table >= tableCount())
                         searchIndex.table = 0;
 
-                    currentTable = static_cast<TableModel*>
-                                        (table(tableIDList[searchIndex.table]));
+                    currentTable =
+                            static_cast<TableModel*>(table(searchIndex.table));
                     rowCount = currentTable->countRow();
                     columnCount = currentTable->countColumn();
                 }
@@ -169,8 +164,8 @@ BookIndex BookModel::find(QString text, BookIndex startIndex,
                     if (searchIndex.table >= tableCount())
                         searchIndex.table = 0;
 
-                    currentTable = static_cast<TableModel*>
-                                        (table(tableIDList[searchIndex.table]));
+                    currentTable =
+                            static_cast<TableModel*>(table(searchIndex.table));
                     rowCount = currentTable->countRow();
                     columnCount = currentTable->countColumn();
 
@@ -205,13 +200,7 @@ BookModelPrivate::BookModelPrivate(BookModel* parent)
     q_ptr = parent;
 }
 
-BaseTableModel* BookModelPrivate::newBaseTable(const BaseTableModel* src)
+TableModel* BookModelPrivate::newTable()
 {
-    if (src == nullptr)
-        return new TableModel(q_ptr);
-    const TableModel* srcTable = dynamic_cast<const TableModel*>(src);
-    if (srcTable == nullptr)
-        return new TableModel(q_ptr);
-    else
-        return new TableModel(*srcTable);
+    return new TableModel(q_ptr);
 }

@@ -3,7 +3,6 @@
 
 #include "OpenTable/onbook.h"
 #include "basetablemodel.h"
-#include "bookindex.h"
 
 
 class BaseBookModelPrivate;
@@ -15,22 +14,24 @@ public:
 
     bool load();
 
-    int tableCount() const;
-    std::vector<int> tableIDs() const;
-
-    BaseTableModel* table(int tableID) const;
+    BaseTableModel* table(int tableIndex) const;
     BaseTableModel* newTable();
     BaseTableModel* addTable(const std::string& tableName);
     BaseTableModel*
     convertColumnToTable(BaseTableModel* sourceTable,
-                         int sourceColumnID,
+                         int sourceColumnIndex,
                          const std::string& newTableName);
-    BaseTableModel*
-    duplicateTable(int tableID, const std::string& newName);
-    bool removeTable(int tableID);
+    BaseTableModel* duplicateTable(int tableIndex, const std::string& newName);
+    bool removeTable(int tableIndex);
 
-    BaseTableModel* columnReferenceTable(int sourceTableID,
-                                                 int sourceColumnID);
+    std::string tableName(int tableIndex) const;
+    bool setTableName(int tableIndex, const std::string& newName);
+
+    bool setColumnReference(int sourceTableIndex,
+                            int sourceColumnIndex,
+                            int targetTableIndex);
+    void removeColumnReference(int tableIndex, int columnIndex);
+    BaseTableModel* columnReferenceTable(int tableID, int columnIndex);
 
     // Slots to be connected to BaseTableModels
     void onTableColumnAdded(int tableID, int columnID, int referenceID);
@@ -39,9 +40,6 @@ public:
 protected:
     BaseBookModelPrivate* d;
     BaseBookModel(BaseBookModelPrivate* data);
-    virtual BaseTableModel* newBaseTable(const BaseTableModel* src);
-
-    friend class BaseBookModelPrivate;
 };
 
 #endif // BASEBOOKMODEL_H

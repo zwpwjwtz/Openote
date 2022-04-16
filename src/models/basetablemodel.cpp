@@ -25,33 +25,118 @@ BaseTableModel::BaseTableModel(BaseTableModelPrivate* data)
     d = data;
 }
 
-int BaseTableModel::rowID(int row) const
+int BaseTableModel::rowID(int rowIndex) const
 {
-    return d->getRowID(row);
+    if (rowIndex < 0)
+        return 0;
+
+    auto i = d->IDList.cbegin();
+    std::advance(i, rowIndex);
+    if (i == d->IDList.cend())
+        return 0;
+    else
+        return *i;
 }
 
-int BaseTableModel::columnID(int column) const
+int BaseTableModel::columnID(int columnIndex) const
 {
-    return d->columnIDList[column];
+    if (columnIndex >= 0 && columnIndex < d->columnIDList.size())
+        return d->columnIDList[columnIndex];
+    else
+        return 0;
+}
+
+int BaseTableModel::columnIndex(int columnID) const
+{
+    for (int i=0; i<d->columnIDList.size(); i++)
+    {
+        if (d->columnIDList[i] == columnID)
+            return i;
+    }
+    return -1;
 }
 
 bool BaseTableModel::bindBookModel(BaseBookModel* model)
 {
     d->book = model;
-}
-
-bool BaseTableModel::setColumnReference(int columnID, int referenceID)
-{
-    int columnIndex = d->getColumnIndexByID(columnID);
-    if (columnIndex < 0)
-        return false;
-
-    d->columnReferenceIDList[columnIndex] = referenceID;
     return true;
 }
-bool BaseTableModel::duplicateRow(int row)
+
+bool BaseTableModel::setColumnReference(int columnIndex, int referenceID)
 {
-    int oldRowID = d->getRowID(row);
+    if (columnIndex >= 0 && columnIndex < d->columnReferenceIDList.size())
+    {
+        d->columnReferenceIDList[columnIndex] = referenceID;
+        return true;
+    }
+    else
+        return false;
+}
+
+void BaseTableModel::clear(int rowIndex, int columnIndex)
+{
+    ONTable::clear(rowID(rowIndex), columnID(columnIndex));
+}
+
+void BaseTableModel::clearRow(int rowIndex)
+{
+    ONTable::clearRow(rowID(rowIndex));
+}
+
+void BaseTableModel::clearColumn(int columnIndex)
+{
+    ONTable::clearColumn(columnID(columnIndex));
+}
+
+int BaseTableModel::newRow()
+{
+    if (ONTable::newRow() > 0)
+        return countRow();
+    else
+        return -1;
+}
+
+int BaseTableModel::newColumn(const std::string& name,
+                              ColumnType columnType,
+                              int referenceID)
+{
+    if (ONTable::newColumn(name, columnType) > 0)
+    {
+        d->columnReferenceIDList.push_back(referenceID);
+        return countColumn();
+    }
+    else
+        return -1;
+}
+
+int BaseTableModel::insertRow(int rowIndex)
+{
+    if (ONTable::newRow() > 0)
+    {
+        moveRow(countRow(), rowIndex);
+        return rowIndex;
+    }
+    else
+        return -1;
+}
+
+int BaseTableModel::insertColumn(int columnIndex,
+                                 const std::string& name,
+                                 ColumnType columnType,
+                                 int referenceID)
+{
+    if (newColumn(name, columnType, referenceID) > 0)
+    {
+        moveColumn(countColumn(), columnIndex);
+        return columnIndex;
+    }
+    else
+        return -1;
+}
+
+bool BaseTableModel::duplicateRow(int rowIndex)
+{
+    int oldRowID = rowID(rowIndex);
     int newRowID = ONTable::newRow();
     int columnCount = d->columnList.size();
     for (int i=0; i<columnCount; i++)
@@ -77,10 +162,10 @@ bool BaseTableModel::duplicateRow(int row)
     return true;
 }
 
-bool BaseTableModel::duplicateColumn(int column, const std::string& newName)
+bool BaseTableModel::duplicateColumn(int columnIndex,
+                                     const std::string& newName)
 {
-    int columnIndex = countColumn();
-    ONTableColumn* oldColumn = ONTable::d_ptr->columnList[column];
+    ONTableColumn* oldColumn = ONTable::d_ptr->columnList[columnIndex];
     ONTableColumn* newColumn;
     switch (oldColumn->typeID)
     {
@@ -114,18 +199,90 @@ bool BaseTableModel::duplicateColumn(int column, const std::string& newName)
     d->columnIDList.push_back(availableID);
     d->columnTypeIDList.push_back(newColumn->typeID);
     d->columnNameList.push_back(newName);
-    d->columnReferenceIDList.push_back(d->columnReferenceIDList[column]);
-    d->book->onTableColumnAdded(ID, newColumn->ID, d->columnReferenceIDList[column]);
+    d->columnReferenceIDList.push_back(d->columnReferenceIDList[columnIndex]);
+    if (d->book != nullptr)
+        d->book->onTableColumnAdded(ID, newColumn->ID,
+                                    d->columnReferenceIDList[columnIndex]);
 
     return true;
 }
 
-void BaseTableModel::removeColumn(int column)
+void BaseTableModel::moveRow(int fromIndex, int toIndex)
 {
-    int columnID = BaseTableModel::d_ptr->columnIDList[column];
-    BaseTableModel::removeColumn(columnID);
-    d->columnReferenceIDList.erase(d->columnReferenceIDList.begin() + column);
-    d->book->onTableColumnRemoved(ID, columnID);
+    if (fromIndex < 0 || fromIndex >= d->IDList.size() ||
+        toIndex < 0 || toIndex > d->IDList.size() ||
+        fromIndex == toIndex)
+        return;
+
+    auto i = d->IDList.begin();
+    std::advance(i, fromIndex);
+    if (toIndex == d->IDList.size())
+    {
+        d->IDList.push_back(*i);
+    }
+    else
+    {
+        auto j = d->IDList.begin();
+        std::advance(j, toIndex);
+        d->IDList.insert(j, *i);
+    }
+    d->IDList.erase(i);
+}
+
+void BaseTableModel::moveColumn(int fromIndex, int toIndex)
+{
+    if (fromIndex < 0 || fromIndex >= d->columnIDList.size() ||
+        toIndex < 0 || toIndex >= d->columnIDList.size() ||
+        fromIndex == toIndex)
+        return;
+
+    int columnID = d->columnIDList[fromIndex];
+    if (fromIndex < toIndex)
+    {
+        for (int i = fromIndex; i<toIndex; i++)
+            d->columnIDList[i] = d->columnIDList[i + 1];
+    }
+    else
+    {
+        for (int i = fromIndex; i>toIndex; i--)
+            d->columnIDList[i] = d->columnIDList[i - 1];
+    }
+    d->columnIDList[toIndex] = columnID;
+}
+
+void BaseTableModel::removeRow(int rowIndex)
+{
+    ONTable::removeRow(rowID(rowIndex));
+}
+
+void BaseTableModel::removeColumn(int columnIndex)
+{
+    int columnID = BaseTableModel::d_ptr->columnIDList[columnIndex];
+    ONTable::removeColumn(columnID);
+    d->columnReferenceIDList.erase(
+                        d->columnReferenceIDList.begin() + columnIndex);
+    if (d->book != nullptr)
+        d->book->onTableColumnRemoved(ID, columnID);
+}
+
+std::string BaseTableModel::columnName(int columnIndex) const
+{
+    return ONTable::columnName(columnID(columnIndex));
+}
+
+void BaseTableModel::setColumnName(int columnIndex, const std::string& newName)
+{
+    ONTable::setColumnName(columnID(columnIndex), newName);
+}
+
+ONTable::ColumnType BaseTableModel::columnType(int columnIndex) const
+{
+    return ONTable::columnType(columnID(columnIndex));
+}
+
+bool BaseTableModel::setColumnType(int columnIndex, ColumnType newType)
+{
+    return ONTable::setColumnType(columnID(columnIndex), newType);
 }
 
 bool BaseTableModel::load()
@@ -144,6 +301,52 @@ bool BaseTableModel::load()
     return true;
 }
 
+int BaseTableModel::readInt(int rowIndex, int columnIndex) const
+{
+    return ONTable::readInt(rowID(rowIndex), columnID(columnIndex));
+}
+
+double BaseTableModel::readDouble(int rowIndex, int columnIndex) const
+{
+    return ONTable::readDouble(rowID(rowIndex), columnID(columnIndex));
+}
+
+std::string BaseTableModel::readString(int rowIndex, int columnIndex) const
+{
+    return ONTable::readString(rowID(rowIndex), columnID(columnIndex));
+}
+
+std::vector<int> BaseTableModel::readIntList(int rowIndex,
+                                             int columnIndex) const
+{
+    return ONTable::readIntList(rowID(rowIndex), columnID(columnIndex));
+}
+
+template<typename T>
+bool BaseTableModel::modify(int rowIndex, int columnIndex, const T& value)
+{
+    return ONTable::modify(rowID(rowIndex), columnID(columnIndex), value);
+}
+
+template bool BaseTableModel::modify(int, int, const int&);
+template bool BaseTableModel::modify(int, int, const double&);
+template bool BaseTableModel::modify(int, int, const std::string&);
+template bool BaseTableModel::modify(int, int, const std::vector<int>&);
+
+template<typename T>
+std::list<int> BaseTableModel::insert(int columnIndex,
+                                      const std::list<T>& valueList)
+{
+    return ONTable::insert(columnIndex, valueList);
+}
+
+template std::list<int> BaseTableModel::insert(int, const std::list<int>&);
+template std::list<int> BaseTableModel::insert(int, const std::list<double>&);
+template
+std::list<int> BaseTableModel::insert(int, const std::list<std::string>&);
+template
+std::list<int> BaseTableModel::insert(int, const std::list<std::vector<int>>&);
+
 
 BaseTableModelPrivate::BaseTableModelPrivate()
 {
@@ -159,23 +362,3 @@ BaseTableModelPrivate::BaseTableModelPrivate(const BaseTableModelPrivate& src) :
 
 BaseTableModelPrivate::~BaseTableModelPrivate()
 {}
-
-int BaseTableModelPrivate::getRowID(int rowIndex) const
-{
-    // The order of rows are fixed and does not allow changes
-    // So just iterate over the IDList and take the ID located
-    // at index rowIndex would be fine
-    int count = 0;
-    auto i = IDList.cbegin();
-    while (i != IDList.cend())
-    {
-        if (count == rowIndex)
-            break;
-        count++;
-        i++;
-    }
-    if (i == IDList.cend())
-        return 0;
-    else
-        return *i;
-}

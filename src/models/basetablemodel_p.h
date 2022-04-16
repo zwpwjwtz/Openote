@@ -15,8 +15,6 @@ public:
 
     BaseBookModel* book;
     std::vector<int> columnReferenceIDList;
-
-    int getRowID(int rowIndex) const;
 };
 
 #endif // BASETABLEMODEL_P_H

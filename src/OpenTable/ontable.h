@@ -33,61 +33,58 @@ public:
 
     int ID;
 
-    virtual int countRow() const;
-    virtual int countColumn() const;
+    int countRow() const;
+    int countColumn() const;
 
-    virtual bool existsRow(int ID) const;
-    virtual bool existsColumn(int ID) const;
+    bool existsRow(int ID) const;
+    bool existsColumn(int ID) const;
 
-    virtual std::list<int> IDs() const;
-    virtual std::vector<int> columnIDs() const;
+    std::list<int> IDs() const;
+    std::vector<int> columnIDs() const;
 
-    virtual std::string columnName(int columnID) const;
-    virtual void setColumnName(int columnID, const std::string &newName);
+    std::string columnName(int columnID) const;
+    void setColumnName(int columnID, const std::string &newName);
 
-    virtual void clear();
-    virtual void clear(int ID, int columnID);
-    virtual void clearRow(int ID);
-    virtual void clearColumn(int columnID);
+    void clear();
+    void clear(int ID, int columnID);
+    void clearRow(int ID);
+    void clearColumn(int columnID);
 
-    virtual int newRow();
-    virtual int newColumn(const std::string& name, ColumnType columnType);
+    int newRow();
+    int newColumn(const std::string& name, ColumnType columnType);
 
-    virtual ColumnType columnType(int columnID) const;
-    virtual bool setColumnType(int columnID, ColumnType newType);
+    ColumnType columnType(int columnID) const;
+    bool setColumnType(int columnID, ColumnType newType);
 
-    virtual ONTableDefaultValue defaultValues() const;
-    virtual void setDefaultValues(const ONTableDefaultValue& values);
+    ONTableDefaultValue defaultValues() const;
+    void setDefaultValues(const ONTableDefaultValue& values);
 
-    virtual int readInt(int ID, int columnID) const;
-    virtual double readDouble(int ID, int columnID) const;
-    virtual std::string readString(int ID, int columnID) const;
-    virtual std::vector<int> readIntList(int ID, int columnID) const;
+    int readInt(int ID, int columnID) const;
+    double readDouble(int ID, int columnID) const;
+    std::string readString(int ID, int columnID) const;
+    std::vector<int> readIntList(int ID, int columnID) const;
 
-    virtual bool modify(int ID, int columnID, const int& value);
-    virtual bool modify(int ID, int columnID, const double& value);
-    virtual bool modify(int ID, int columnID, const std::string& value);
-    virtual bool modify(int ID, int columnID,
-                        const std::vector<int>& valueList);
+    bool modify(int ID, int columnID, const int& value);
+    bool modify(int ID, int columnID, const double& value);
+    bool modify(int ID, int columnID, const std::string& value);
+    bool modify(int ID, int columnID, const std::vector<int>& valueList);
 
-    virtual std::list<int> insert(int columnID,
-                                  const std::list<int>& valueList);
-    virtual std::list<int> insert(int columnID,
-                                  const std::list<double>& valueList);
-    virtual std::list<int> insert(int columnID,
-                                  const std::list<std::string>& valueList);
-    virtual std::list<int> insert(int columnID,
-                                  const std::list<std::vector<int>>& valueList);
+    std::list<int> insert(int columnID, const std::list<int>& valueList);
+    std::list<int> insert(int columnID, const std::list<double>& valueList);
+    std::list<int> insert(int columnID,
+                          const std::list<std::string>& valueList);
+    std::list<int> insert(int columnID,
+                          const std::list<std::vector<int>>& valueList);
 
-    virtual void removeRow(int ID);
-    virtual void removeColumn(int columnID);
+    void removeRow(int ID);
+    void removeColumn(int columnID);
 
-    virtual std::string bindingDirectory() const;
-    virtual bool setBindingDirectory(const std::string& path);
-    virtual void clearBindingDirectory();
+    std::string bindingDirectory() const;
+    bool setBindingDirectory(const std::string& path);
+    void clearBindingDirectory();
 
-    virtual std::string fileSuffix() const;
-    virtual void setFileSuffix(const std::string& suffix);
+    std::string fileSuffix() const;
+    void setFileSuffix(const std::string& suffix);
 
     virtual bool load();
     virtual bool save();

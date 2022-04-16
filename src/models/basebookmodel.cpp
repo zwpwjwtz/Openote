@@ -15,14 +15,6 @@ BaseBookModel::BaseBookModel(BaseBookModelPrivate* data)
     d = data;
 }
 
-BaseTableModel* BaseBookModel::newBaseTable(const BaseTableModel* src)
-{
-    if (src == nullptr)
-        return new BaseTableModel();
-    else
-        return new BaseTableModel(*src);
-}
-
 void BaseBookModel::onTableColumnAdded(int tableID,
                                        int columnID,
                                        int referenceID)
@@ -50,29 +42,18 @@ bool BaseBookModel::load()
             table = static_cast<BaseTableModel*>
                         (d->tableList[d->getTableIndexByID(i->first.first)]);
         }
-        table->setColumnReference(i->first.second, i->second);
+        table->setColumnReference(table->columnIndex(i->first.second),
+                                  i->second);
     }
     return true;
 }
 
-int BaseBookModel::tableCount() const
+BaseTableModel* BaseBookModel::table(int tableIndex) const
 {
-    return count();
-}
-
-std::vector<int> BaseBookModel::tableIDs() const
-{
-    auto stdList = ONBook::tableIDs();
-    std::vector<int> IDList;
-    IDList.reserve(stdList.size());
-    for (auto i=stdList.cbegin(); i!=stdList.cend(); i++)
-        IDList.push_back(*i);
-    return IDList;
-}
-
-BaseTableModel* BaseBookModel::table(int tableID) const
-{
-    return static_cast<BaseTableModel*>(ONBook::table(tableID));
+    if (tableIndex >= 0 && tableIndex < d->tableList.size())
+        return static_cast<BaseTableModel*>(d->tableList[tableIndex]);
+    else
+        return nullptr;
 }
 
 BaseTableModel* BaseBookModel::newTable()
@@ -86,7 +67,7 @@ BaseTableModel* BaseBookModel::addTable(const std::string& tableName)
     int availableID = d->tableList.size() > 0 ?
                       d->tableList.back()->ID + 1 : 1;
 
-    BaseTableModel* newTable = newBaseTable(nullptr);
+    BaseTableModel* newTable = this->newTable();
     newTable->ID = availableID;
     d->tableList.push_back(newTable);
     d->tableIDList.push_back(availableID);
@@ -96,10 +77,10 @@ BaseTableModel* BaseBookModel::addTable(const std::string& tableName)
     return newTable;
 }
 
-BaseTableModel* BaseBookModel::duplicateTable(int tableID,
+BaseTableModel* BaseBookModel::duplicateTable(int tableIndex,
                                               const std::string& newName)
 {
-    const BaseTableModel* table = this->table(tableID);
+    const BaseTableModel* table = this->table(tableIndex);
     if (table == nullptr)
         return nullptr;
 
@@ -107,14 +88,14 @@ BaseTableModel* BaseBookModel::duplicateTable(int tableID,
     int availableID = d->tableList.size() > 0 ?
                       d->tableList.back()->ID + 1 : 1;
 
-    BaseTableModel* newTable = newBaseTable(table);
+    BaseTableModel* newTable = this->newTable();
     newTable->ID = availableID;
     d->tableList.push_back(newTable);
     d->tableIDList.push_back(availableID);
     d->tableNameList.push_back(newName);
     for (auto i=d->columnReference.begin(); i!=d->columnReference.cend(); i++)
     {
-        if (i->first.first == tableID)
+        if (i->first.first == table->ID)
         {
             d->columnReference.insert(
                 std::make_pair(std::make_pair(newTable->ID, i->first.second),
@@ -126,16 +107,17 @@ BaseTableModel* BaseBookModel::duplicateTable(int tableID,
     return newTable;
 }
 
-bool BaseBookModel::removeTable(int tableID)
+bool BaseBookModel::removeTable(int tableIndex)
 {
-    int index = d->getTableIndexByID(tableID);
-    if (index < 0)
+    auto table = this->table(tableIndex);
+    if (table == nullptr)
         return false;
 
-    delete d->tableList[index];
-    d->tableList.erase(d->tableList.begin() + index);
-    d->tableIDList.erase(d->tableIDList.begin() + index);
-    d->tableNameList.erase(d->tableNameList.begin() + index);
+    int tableID = table->ID;
+    delete d->tableList[tableIndex];
+    d->tableList.erase(d->tableList.begin() + tableIndex);
+    d->tableIDList.erase(d->tableIDList.begin() + tableIndex);
+    d->tableNameList.erase(d->tableNameList.begin() + tableIndex);
     for (auto i=d->columnReference.begin(); i!=d->columnReference.end(); )
     {
         if (i->first.first == tableID)
@@ -146,14 +128,64 @@ bool BaseBookModel::removeTable(int tableID)
 
     // Update the data of parent class
     BaseBookModel::d_ptr->tableList.erase(
-                            BaseBookModel::d_ptr->tableList.begin() + index);
+                        BaseBookModel::d_ptr->tableList.begin() + tableIndex);
 
     return true;
 }
 
+std::string BaseBookModel::tableName(int tableIndex) const
+{
+    auto table = this->table(tableIndex);
+    if (table != nullptr)
+        return d_ptr->tableNameList[tableIndex];
+    else
+        return std::string();
+}
+
+bool BaseBookModel::setTableName(int tableIndex, const std::string& newName)
+{
+    auto table = this->table(tableIndex);
+    if (table != nullptr)
+    {
+        d_ptr->tableNameList[tableIndex] = newName;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool BaseBookModel::setColumnReference(int sourceTableIndex,
+                                       int sourceColumnIndex,
+                                       int targetTableIndex)
+{
+    auto sourceTable = this->table(sourceTableIndex);
+    auto targetTable = this->table(targetTableIndex);
+    if (sourceTable == nullptr || targetTable == nullptr)
+        return false;
+
+    int sourceColumnID = sourceTable->columnID(sourceColumnIndex);
+    if (sourceColumnID > 0)
+        return ONBook::setColumnReference(sourceTable->ID,
+                                          sourceColumnID,
+                                          targetTable->ID);
+    else
+        return false;
+}
+
+void BaseBookModel::removeColumnReference(int tableIndex, int columnIndex)
+{
+    auto table = this->table(tableIndex);
+    if (table == nullptr)
+        return;
+
+    int columnID = table->columnID(columnIndex);
+    if (columnID > 0)
+        ONBook::removeColumnReference(table->ID, columnID);
+}
+
 BaseTableModel*
 BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
-                                    int sourceColumnID,
+                                    int sourceColumnIndex,
                                     const std::string& newTableName)
 {
     BaseTableModel* newTable = addTable(newTableName);
@@ -161,9 +193,9 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
         return nullptr;
 
     // Create an empty column in the new table
-    std::string columnName = sourceTable->columnName(sourceColumnID);
+    std::string columnName = sourceTable->columnName(sourceColumnIndex);
     BaseTableModel::ColumnType columnType =
-                                    sourceTable->columnType(sourceColumnID);
+                                    sourceTable->columnType(sourceColumnIndex);
 
     // Get values in the source column, remove duplicated values,
     // then fill the new column by unique values
@@ -177,7 +209,7 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
         {
             std::list<int> intList;
             for (; i!=IDList.cend(); i++)
-                intList.push_back(sourceTable->readInt(*i, sourceColumnID));
+                intList.push_back(sourceTable->readInt(*i, sourceColumnIndex));
             BaseBookModelPrivate::removeDuplicate<int>(intList, indexMap);
             newIDList = newTable->insert(targetColumnID, intList);
             break;
@@ -187,7 +219,7 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
             std::list<double> doubleList;
             for (; i!=IDList.cend(); i++)
                 doubleList.push_back(
-                            sourceTable->readDouble(*i, sourceColumnID));
+                            sourceTable->readDouble(*i, sourceColumnIndex));
             BaseBookModelPrivate::removeDuplicate<double>(doubleList, indexMap);
             newIDList = newTable->insert(targetColumnID, doubleList);
             break;
@@ -197,7 +229,7 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
             std::list<std::string> stringList;
             for (; i!=IDList.cend(); i++)
                 stringList.push_back(
-                            sourceTable->readString(*i, sourceColumnID));
+                            sourceTable->readString(*i, sourceColumnIndex));
             BaseBookModelPrivate::removeDuplicate<std::string>(stringList,
                                                                indexMap);
             newIDList = newTable->insert(targetColumnID, stringList);
@@ -208,7 +240,7 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
             std::list<std::vector<int>> intListList;
             for (; i!=IDList.cend(); i++)
                 intListList.push_back(
-                             sourceTable->readIntList(*i, sourceColumnID));
+                             sourceTable->readIntList(*i, sourceColumnIndex));
             BaseBookModelPrivate::removeDuplicate<std::vector<int>>(intListList,
                                                                     indexMap);
             newIDList = newTable->insert(targetColumnID, intListList);
@@ -219,34 +251,38 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
 
     // Replace the content of the source column with new row IDs
     // Change the column type if needed
-    sourceTable->clearColumn(sourceColumnID);
-    sourceTable->setColumnType(sourceColumnID, BaseTableModel::IntegerList);
+    sourceTable->clearColumn(sourceColumnIndex);
+    sourceTable->setColumnType(sourceColumnIndex, BaseTableModel::IntegerList);
     int index;
     std::list<int>::const_iterator j;
     for (i=IDList.begin(), index = 0; i!=IDList.end(); i++, index++)
     {
         j = newIDList.cbegin();
         std::advance(j, indexMap[index]);
-        sourceTable->modify(*i, sourceColumnID, std::vector<int>({ *j }));
+        sourceTable->modify(*i, sourceColumnIndex, std::vector<int>({ *j }));
     }
 
     // Update the column reference
-    setColumnReference(sourceTable->ID, sourceColumnID, newTable->ID);
-    sourceTable->setColumnReference(sourceColumnID, newTable->ID);
+    setColumnReference(sourceTable->ID, sourceColumnIndex, newTable->ID);
+    sourceTable->setColumnReference(sourceColumnIndex, newTable->ID);
 
     return newTable;
 }
 
 BaseTableModel*
-BaseBookModel::columnReferenceTable(int sourceTableID, int sourceColumnID)
+BaseBookModel::columnReferenceTable(int tableID, int columnIndex)
 {
-    int targetTableID = BaseBookModel::columnReference(sourceTableID,
-                                                       sourceColumnID);
+    int tableIndex = d_ptr->getTableIndexByID(tableID);
+    if (tableIndex < 0)
+        return nullptr;
+
+    int sourceColumnID = table(tableIndex)->columnID(columnIndex);
+    int targetTableID = columnReference(tableID, sourceColumnID);
     if (targetTableID > 0)
     {
-        int index = d->getTableIndexByID(targetTableID);
-        if (index >= 0)
-            return static_cast<BaseTableModel*>(d->tableList[index]);
+        tableIndex = d_ptr->getTableIndexByID(targetTableID);
+        if (tableIndex >= 0)
+            return static_cast<BaseTableModel*>(d->tableList[tableIndex]);
     }
     return nullptr;
 }
@@ -259,7 +295,7 @@ BaseBookModelPrivate::BaseBookModelPrivate(BaseBookModel* parent)
 
 bool BaseBookModelPrivate::loadTable(int tableID, const std::string& tableName)
 {
-    BaseTableModel* table = q->newBaseTable(nullptr);
+    BaseTableModel* table = q->newTable();
     tableList.push_back(table);
     if (!(table->setBindingDirectory(getTableDirectory(tableID)) &&
           table->load()))

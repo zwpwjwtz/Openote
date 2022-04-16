@@ -2,6 +2,7 @@
 #define BOOKMODEL_P_H
 
 #include "basebookmodel.h"
+#include "tablemodel.h"
 
 
 class TableModel;
@@ -11,7 +12,7 @@ class BookModelPrivate : public BaseBookModel
 {
 public:
     BookModelPrivate(BookModel* parent);
-    BaseTableModel* newBaseTable(const BaseTableModel* src);
+    TableModel* newTable();
 
 protected:
     BookModel* q_ptr;

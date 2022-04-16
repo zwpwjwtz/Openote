@@ -26,9 +26,8 @@ ColumnReferenceDelegate::createEditor(QWidget* parent,
         return QItemDelegate::createEditor(parent, option, index);
     }
 
-    int columnID = table->columnID(index.column());
-    const TableModel* referenceTable = book->columnReferenceTable(table->ID,
-                                                                  columnID);
+    const TableModel* referenceTable =
+                        book->columnReferenceTable(table->ID, index.column());
     if (referenceTable == nullptr)
     {
         // This column does not have any reference
@@ -43,13 +42,13 @@ ColumnReferenceDelegate::createEditor(QWidget* parent,
     }
 
     // Load all data in the referred column into a list
-    int referredColumnID = referenceTable->columnID(0);
-    auto columnType = referenceTable->columnType(referredColumnID);
+    int referredColumn = 0;
+    auto columnType = referenceTable->columnType(referredColumn);
     auto rowIDs = referenceTable->IDs();
 
     ColumnReferenceSelector* listEditor = new ColumnReferenceSelector(parent);
     listEditor->setProperty(OPENOTE_DELEGATE_EDITOR_PROP_TABLE, table->ID);
-    listEditor->setProperty(OPENOTE_DELEGATE_EDITOR_PROP_COL, columnID);
+    listEditor->setProperty(OPENOTE_DELEGATE_EDITOR_PROP_COL, index.column());
     connect(listEditor, &ColumnReferenceSelector::addingItemRequested,
             this, &ColumnReferenceDelegate::onEditorAddingItemRequested);
     for (auto i=rowIDs.cbegin(); i!=rowIDs.cend(); i++)
@@ -58,21 +57,21 @@ ColumnReferenceDelegate::createEditor(QWidget* parent,
         {
             case TableModel::ColumnType::Integer:
                 listEditor->addItem(*i,
-                            referenceTable->readInt(*i, referredColumnID));
+                            referenceTable->readInt(*i, referredColumn));
                 break;
             case TableModel::ColumnType::Double:
                 listEditor->addItem(*i,
-                            referenceTable->readDouble(*i, referredColumnID));
+                            referenceTable->readDouble(*i, referredColumn));
                 break;
             case TableModel::ColumnType::String:
                 listEditor->addItem(*i,
                     QString::fromStdString(
-                            referenceTable->readString(*i, referredColumnID)));
+                            referenceTable->readString(*i, referredColumn)));
                 break;
             case TableModel::ColumnType::IntegerList:
             {
                 QString displayedString;
-                auto values = referenceTable->readIntList(*i, referredColumnID);
+                auto values = referenceTable->readIntList(*i, referredColumn);
                 for (auto j=values.cbegin(); j!=values.cend(); j++)
                     displayedString.append(*j);
                 listEditor->addItem(*i, displayedString);
@@ -159,18 +158,17 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
                                 ColumnReferenceSelector* editor, QString text)
 {
     int tableID = editor->property(OPENOTE_DELEGATE_EDITOR_PROP_TABLE).toInt();
-    int columnID = editor->property(OPENOTE_DELEGATE_EDITOR_PROP_COL).toInt();
-    if (tableID < 1 || columnID < 1)
+    int column = editor->property(OPENOTE_DELEGATE_EDITOR_PROP_COL).toInt();
+    if (tableID < 1 || column < 0)
         return;
 
     TableModel* table = book->table(tableID);
-    TableModel* referenceTable = book->columnReferenceTable(table->ID,
-                                                            columnID);
+    TableModel* referenceTable = book->columnReferenceTable(table->ID, column);
 
     int rowID;
-    int referredColumnID = referenceTable->columnID(0);
+    int referredColumn = 0;
     bool conversionOK = true, successful = false;
-    switch (referenceTable->columnType(referredColumnID))
+    switch (referenceTable->columnType(referredColumn))
     {
         case TableModel::ColumnType::Integer:
         {
@@ -179,7 +177,7 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
             if (conversionOK)
             {
                 rowID = referenceTable->newRow();
-                successful = referenceTable->modify(rowID, referredColumnID,
+                successful = referenceTable->modify(rowID, referredColumn,
                                                     intValue);
             }
             break;
@@ -191,7 +189,7 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
             if (conversionOK)
             {
                 rowID = referenceTable->newRow();
-                successful = referenceTable->modify(rowID, referredColumnID,
+                successful = referenceTable->modify(rowID, referredColumn,
                                                     doubleValue);
             }
             break;
@@ -200,7 +198,7 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
         {
             std::string stringValue = text.toStdString();
             rowID = referenceTable->newRow();
-            successful = referenceTable->modify(rowID, referredColumnID,
+            successful = referenceTable->modify(rowID, referredColumn,
                                                 stringValue);
             break;
         }
@@ -220,7 +218,7 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
             if (conversionOK)
             {
                 rowID = referenceTable->newRow();
-                successful = referenceTable->modify(rowID, referredColumnID,
+                successful = referenceTable->modify(rowID, referredColumn,
                                                     integers);
             }
             break;

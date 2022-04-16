@@ -67,16 +67,15 @@ bool BookView::loadBook(const QString& path)
 
     TableModel* model;
     TableView* viewTable;
-    auto tableIDs = d_ptr->book.tableIDList();
-    for (auto i=tableIDs.cbegin(); i!=tableIDs.cend(); i++)
+    for (int i=0; i<d_ptr->book.tableCount(); i++)
     {
-        model = d_ptr->book.table(*i);
+        model = d_ptr->book.table(i);
         d_ptr->bindTableModel(model);
 
         viewTable = new TableView(this);
         d_ptr->bindTableView(viewTable, model);
         viewTable->scrollToBottom();
-        addTab(viewTable, d_ptr->book.getTableName(*i));
+        addTab(viewTable, d_ptr->book.getTableName(i));
     }
 
     return true;
@@ -153,7 +152,7 @@ bool BookView::addColumn()
         connect(dialog, SIGNAL(finished(int)),
                 d_ptr, SLOT(onDialogColumnAddFinished(int)));
     }
-    if (d_ptr->book.table(d_ptr->getTableID(index.table))->countColumn() < 1)
+    if (d_ptr->book.table(index.table)->countColumn() < 1)
     {
         dialog->enableReference = false;
         dialog->referring = false;
@@ -162,9 +161,8 @@ bool BookView::addColumn()
     {
         dialog->enableReference = true;
         dialog->referenceList.clear();
-        auto tableIDs = d_ptr->book.tableIDList();
-        for (auto i=tableIDs.cbegin(); i!=tableIDs.cend(); i++)
-            dialog->referenceList.push_back(d_ptr->book.getTableName(*i));
+        for (int i=0; i<d_ptr->book.tableCount(); i++)
+            dialog->referenceList.push_back(d_ptr->book.getTableName(i));
     }
 
     dialog->open();
@@ -177,8 +175,7 @@ bool BookView::deleteColumn()
     if (!index.isValid())
         return false;
 
-    d_ptr->book.table(d_ptr->getTableID(index.table))
-                                    ->removeColumns(index.column, 1);
+    d_ptr->book.table(index.table)->removeColumns(index.column, 1);
     d_ptr->isModified = true;
         return true;
 }
@@ -197,7 +194,7 @@ bool BookView::duplicateColumn()
     if (newName.isEmpty())
         return false;
 
-    TableModel* table = d_ptr->book.table(d_ptr->getTableID(index.table));
+    TableModel* table = d_ptr->book.table(index.table);
     if (table->duplicateColumn(index.column, newName.toStdString()))
     {
 
@@ -239,19 +236,19 @@ bool BookView::columnToTable()
     if (index.table < 0 || index.column < 0)
         return false;
 
-    TableModel* table = d_ptr->book.table(d_ptr->getTableID(index.table));
-    int columnID = table->columnID(index.column);
+    TableModel* table = d_ptr->book.table(index.table);
     QString tableName =
             QInputDialog::getText(this, tr("Convert a column to table"),
                                   tr("New table name"),
                                   QLineEdit::Normal,
                                   QString::fromStdString(
-                                                  table->columnName(columnID)));
+                                              table->columnName(index.column)));
     if (tableName.isEmpty())
         return false;
 
-    TableModel* newTable =
-                d_ptr->book.convertColumnToTable(table, columnID, tableName);
+    TableModel* newTable = d_ptr->book.convertColumnToTable(index.table,
+                                                            index.column,
+                                                            tableName);
     d_ptr->bindTableModel(newTable);
 
     TableView* viewTable = new TableView(this);
@@ -269,7 +266,7 @@ bool BookView::addRow()
     if (index.table < 0)
         return false;
 
-    TableModel* table = d_ptr->book.table(d_ptr->getTableID(index.table));
+    TableModel* table = d_ptr->book.table(index.table);
     if (table->countColumn() == 0)
     {
         QMessageBox::warning(this, tr("No column presents"),
@@ -288,7 +285,7 @@ bool BookView::deleteRow()
     if (!index.isValid())
         return false;
 
-    TableModel* table = d_ptr->book.table(d_ptr->getTableID(index.table));
+    TableModel* table = d_ptr->book.table(index.table);
     table->removeRows(index.row, 1);
 
     d_ptr->isModified = true;
@@ -301,7 +298,7 @@ bool BookView::duplicateRow()
     if (!index.isValid())
         return false;
 
-    TableModel* table = d_ptr->book.table(d_ptr->getTableID(index.table));
+    TableModel* table = d_ptr->book.table(index.table);
     if (table->duplicateRow(index.row))
     {
         d_ptr->isModified = true;
@@ -338,15 +335,14 @@ bool BookView::deleteTable()
     if (index.table < 0)
         return false;
 
-    int tableID = d_ptr->getTableID(index.table);
     if (QMessageBox::warning(this, tr("Delete a table"),
                              QString(tr("Are you sure to delete table %1 ?"))
-                                    .arg(d_ptr->book.getTableName(tableID)),
+                                    .arg(d_ptr->book.getTableName(index.table)),
                              QMessageBox::Yes | QMessageBox::No)
             != QMessageBox::Yes)
         return false;
 
-    if (d_ptr->book.removeTable(tableID))
+    if (d_ptr->book.removeTable(index.table))
     {
         removeTab(currentIndex());
         d_ptr->isModified = true;
@@ -362,8 +358,7 @@ bool BookView::duplicateTable()
     if (index.table < 0)
         return false;
 
-    int oldTableID = d_ptr->getTableID(index.table);
-    QString oldName = d_ptr->book.getTableName(oldTableID);
+    QString oldName = d_ptr->book.getTableName(index.table);
     QString newName = QInputDialog::getText(this, tr("Duplicate a table"),
                                             tr("New table name:"),
                                             QLineEdit::Normal,
@@ -373,7 +368,7 @@ bool BookView::duplicateTable()
         return false;
 
     // TODO: duplicate the table content
-    TableModel* newTable = d_ptr->book.duplicateTable(oldTableID, newName);
+    TableModel* newTable = d_ptr->book.duplicateTable(index.table, newName);
     if (newTable == nullptr)
         return false;
     d_ptr->bindTableModel(newTable);
@@ -393,8 +388,7 @@ bool BookView::renameTable()
     if (index.table < 0)
         return false;
 
-    int tableID = d_ptr->getTableID(index.table);
-    QString oldName = d_ptr->book.getTableName(tableID);
+    QString oldName = d_ptr->book.getTableName(index.table);
     QString newName = QInputDialog::getText(this, tr("Rename a table"),
                                             tr("New name for the table:"),
                                             QLineEdit::Normal,
@@ -404,7 +398,7 @@ bool BookView::renameTable()
     if (newName.isEmpty() || newName == oldName)
         return true;
 
-    if (d_ptr->book.setTableName(tableID, newName))
+    if (d_ptr->book.setTableName(index.table, newName))
     {
         setTabText(currentIndex(), newName);
         d_ptr->isModified = true;
@@ -416,22 +410,24 @@ bool BookView::renameTable()
 bool BookView::copyContent()
 {
     auto index = d_ptr->getCurrentIndex();
-    TableModel* table = d_ptr->book.table(d_ptr->getTableID(index.table));
-    int columnID = table->columnID(index.column);
-    int rowID = table->rowID(index.row);
-    switch (table->columnType(columnID))
+    TableModel* table = d_ptr->book.table(index.table);
+    switch (table->columnType(index.column))
     {
         case TableModel::Integer:
-            d_ptr->getClipboard()->copy(table->readInt(rowID, columnID));
+            d_ptr->getClipboard()->copy(
+                        table->readInt(index.row, index.column));
             break;
         case TableModel::Double:
-            d_ptr->getClipboard()->copy(table->readDouble(rowID, columnID));
+            d_ptr->getClipboard()->copy(
+                        table->readDouble(index.row, index.column));
             break;
         case TableModel::String:
-            d_ptr->getClipboard()->copy(table->readString(rowID, columnID));
+            d_ptr->getClipboard()->copy(
+                        table->readString(index.row, index.column));
             break;
         case TableModel::IntegerList:
-            d_ptr->getClipboard()->copy(table->readIntList(rowID, columnID));
+            d_ptr->getClipboard()->copy(
+                        table->readIntList(index.row, index.column));
             break;
         default:
             return false;
@@ -442,49 +438,49 @@ bool BookView::copyContent()
 bool BookView::cutContent()
 {
     auto index = d_ptr->getCurrentIndex();
-    TableModel* table = d_ptr->book.table(d_ptr->getTableID(index.table));
-    int columnID = table->columnID(index.column);
-    int rowID = table->rowID(index.row);
-    switch (table->columnType(columnID))
+    TableModel* table = d_ptr->book.table(index.table);
+    switch (table->columnType(index.column))
     {
         case TableModel::Integer:
-            d_ptr->getClipboard()->copy(table->readInt(rowID, columnID));
+            d_ptr->getClipboard()->copy(
+                        table->readInt(index.row, index.column));
             break;
         case TableModel::Double:
-            d_ptr->getClipboard()->copy(table->readDouble(rowID, columnID));
+            d_ptr->getClipboard()->copy(
+                        table->readDouble(index.row, index.column));
             break;
         case TableModel::String:
-            d_ptr->getClipboard()->copy(table->readString(rowID, columnID));
+            d_ptr->getClipboard()->copy(
+                        table->readString(index.row, index.column));
             break;
         case TableModel::IntegerList:
-            d_ptr->getClipboard()->copy(table->readIntList(rowID, columnID));
+            d_ptr->getClipboard()->copy(
+                        table->readIntList(index.row, index.column));
             break;
         default:
             return false;
     }
-    table->ONTable::clear(rowID, columnID);
+    table->ONTable::clear(index.row, index.column);
     return true;
 }
 
 bool BookView::pasteContent()
 {
     auto index = d_ptr->getCurrentIndex();
-    TableModel* table = d_ptr->book.table(d_ptr->getTableID(index.table));
-    int columnID = table->columnID(index.column);
-    int rowID = table->rowID(index.row);
-    switch (table->columnType(columnID))
+    TableModel* table = d_ptr->book.table(index.table);
+    switch (table->columnType(index.column))
     {
         case TableModel::Integer:
-            return table->modify(rowID, columnID, 
+            return table->modify(index.row, index.column,
                                  d_ptr->getClipboard()->pasteAsInt());
         case TableModel::Double:
-            return table->modify(rowID, columnID, 
+            return table->modify(index.row, index.column,
                                  d_ptr->getClipboard()->pasteAsDouble());
         case TableModel::String:
-            return table->modify(rowID, columnID, 
+            return table->modify(index.row, index.column,
                                  d_ptr->getClipboard()->pasteAsString());
         case TableModel::IntegerList:
-            return table->modify(rowID, columnID, 
+            return table->modify(index.row, index.column,
                                  d_ptr->getClipboard()->pasteAsIntList());
         default:
             return false;
@@ -497,10 +493,8 @@ bool BookView::deleteContent()
     if (!index.isValid())
         return false;
 
-    TableModel* table = d_ptr->book.table(d_ptr->getTableID(index.table));
-    int columnID = table->columnID(index.column);
-    int rowID = table->rowID(index.row);
-    table->ONTable::clear(rowID, columnID);
+    TableModel* table = d_ptr->book.table(index.table);
+    table->ONTable::clear(index.row, index.column);
     return true;
 }
 
@@ -542,25 +536,6 @@ BookViewPrivate::~BookViewPrivate()
     delete tabBar;
 }
 
-int BookViewPrivate::getTableID(int tableIndex) const
-{
-    TableView* table = dynamic_cast<TableView*>(q_ptr->widget(tableIndex));
-    if (table == nullptr)
-        return 0;
-    else
-        return table->ID();
-}
-
-int BookViewPrivate::getTableIndex(int tableID) const
-{
-    auto tableIDList = book.tableIDList();
-    auto index = std::find(tableIDList.cbegin(), tableIDList.cend(), tableID);
-    if (index == tableIDList.cend())
-        return -1;
-    else
-        return int(index - tableIDList.cbegin());
-}
-
 BookIndex BookViewPrivate::getCurrentIndex()
 {
     onTabCurrentIndexChanged(q_ptr->currentIndex());
@@ -590,15 +565,14 @@ void BookViewPrivate::bindTableModel(const TableModel* model)
 
 QString BookViewPrivate::columnHeader(int tableIndex, int columnIndex) const
 {
-    return book.table(getTableID(tableIndex))->
+    return book.table(tableIndex)->
                             headerData(columnIndex, Qt::Horizontal).toString();
 }
 
 bool BookViewPrivate::setColumnHeader(const QString &text,
                                int tableIndex, int columnIndex)
 {
-    book.table(getTableID(tableIndex))->
-                            setHeaderData(columnIndex, Qt::Horizontal, text);
+    book.table(tableIndex)->setHeaderData(columnIndex, Qt::Horizontal, text);
     return true;
 }
 
@@ -684,13 +658,12 @@ void BookViewPrivate::onDialogColumnAddFinished(int result)
     if (result == QDialog::Rejected || dialogColumnAdd->newName.isEmpty())
         return;
 
-    int tableID = getTableID(lastIndex.table);
-    int referenceTableID;
+    TableModel* table = book.table(lastIndex.table);
+    TableModel* referredTable = nullptr;
     if (dialogColumnAdd->referring)
     {
-        auto tableIDs = book.tableIDList();
-        referenceTableID = tableIDs[dialogColumnAdd->referenceIndex];
-        if (referenceTableID == tableID)
+         referredTable = book.table(dialogColumnAdd->referenceIndex);
+        if (table == referredTable)
         {
             QMessageBox::warning(q_ptr, tr("Failed creating column"),
                                  tr("Creating a column referring to its "
@@ -701,13 +674,12 @@ void BookViewPrivate::onDialogColumnAddFinished(int result)
         }
     }
 
-    TableModel* table = book.table(tableID);
     std::string newName = dialogColumnAdd->newName.toStdString();
     if (dialogColumnAdd->referring)
     {
         if (table->newColumn(newName,
                              TableModel::ColumnType::IntegerList,
-                             referenceTableID) <= 0)
+                             referredTable->ID) <= 0)
         {
             QMessageBox::critical(q_ptr, tr("Failed creating column"),
                                   tr("An error occurred when creating a column "
@@ -776,7 +748,7 @@ void BookViewPrivate::onTabCurrentIndexChanged(int tableIndex)
         lastIndex.table = -1;
         return;
     }
-    lastIndex.table = getTableIndex(getTableID(tableIndex));
+    lastIndex.table = tableIndex;
 
     // TODO: deal with tables of empty row but of non-empty columns
     QModelIndex modelIndex = table->currentIndex();

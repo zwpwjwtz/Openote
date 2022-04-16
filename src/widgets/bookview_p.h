@@ -26,9 +26,6 @@ public:
 
     BookViewPrivate(BookView* parent = nullptr);
     ~BookViewPrivate();
-    
-    int getTableID(int tableIndex) const;
-    int getTableIndex(int tableID) const;
 
     BookIndex getCurrentIndex();
 

@@ -1,7 +1,6 @@
 #include "tablemodel.h"
 #include "tablemodel_p.h"
 #include "bookmodel.h"
-#include "basetablemodel_p.h"
 
 
 TableModel::TableModel(QObject *parent)
@@ -23,8 +22,7 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation,
 {
     if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
         return QVariant();
-    int columnID = BaseTableModel::d_ptr->columnIDList[section];
-    return QString::fromStdString(columnName(columnID));
+    return QString::fromStdString(columnName(section));
 }
 
 bool TableModel::setHeaderData(int section, Qt::Orientation orientation,
@@ -32,8 +30,7 @@ bool TableModel::setHeaderData(int section, Qt::Orientation orientation,
 {
     if (value != headerData(section, orientation, role))
     {
-        int columnID = BaseTableModel::d_ptr->columnIDList[section];
-        setColumnName(columnID, value.toString().toStdString());
+        setColumnName(section, value.toString().toStdString());
         emit headerDataChanged(orientation, section, section);
         return true;
     }
@@ -86,19 +83,17 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
 
 QVariant TableModel::nativeData(int rowIndex, int columnIndex) const
 {
-    int rowID = d->getRowID(rowIndex);
-    int columnID = d->columnIDList[columnIndex];
     switch (d->columnTypeIDList[columnIndex])
     {
         case ColumnType::Integer:
-            return readInt(rowID, columnID);
+            return readInt(rowIndex, columnIndex);
         case ColumnType::Double:
-            return readDouble(rowID, columnID);
+            return readDouble(rowIndex, columnIndex);
         case ColumnType::String:
-            return QString::fromStdString(readString(rowID, columnID));
+            return QString::fromStdString(readString(rowIndex, columnIndex));
         case ColumnType::IntegerList:
         {
-            auto rawList = readIntList(rowID, columnID);
+            auto rawList = readIntList(rowIndex, columnIndex);
             QList<QVariant> valueList;
             valueList.reserve(rawList.size());
             for (auto i=rawList.cbegin(); i!=rawList.cend(); i++)
@@ -118,18 +113,15 @@ QString TableModel::referenceData(int rowIndex, int columnIndex) const
     if (parentBook == nullptr)
         return targetValue;
 
-    int rowID = d->getRowID(rowIndex);
-    int columnID = d->columnIDList[columnIndex];
-
     // Collect the IDs of referred rows in the specified position
     std::vector<int> referredRowIDs;
     switch (d->columnTypeIDList[columnIndex])
     {
         case ColumnType::Integer:
-            referredRowIDs.push_back(readInt(rowID, columnID));
+            referredRowIDs.push_back(readInt(rowIndex, columnIndex));
             break;
         case ColumnType::IntegerList:
-            referredRowIDs = readIntList(rowID, columnID);
+            referredRowIDs = readIntList(rowIndex, columnIndex);
             break;
         default:
             return targetValue;
@@ -137,7 +129,7 @@ QString TableModel::referenceData(int rowIndex, int columnIndex) const
 
     // Get the referred table
     const TableModel* targetTable = static_cast<TableModel*>
-                            (parentBook->columnReferenceTable(ID, columnID));
+                            (parentBook->columnReferenceTable(ID, columnIndex));
 
     // Use the first column in the referred table as data to display
     if (targetTable == nullptr || targetTable->d->columnIDList.size() < 1)
@@ -151,19 +143,20 @@ QString TableModel::referenceData(int rowIndex, int columnIndex) const
         {
         case ColumnType::Integer:
             targetValue.append(QString::number(
-                               targetTable->readInt(*i, targetColumnID)));
+                    targetTable->ONTable::readInt(*i, targetColumnID)));
             break;
         case ColumnType::Double:
             targetValue.append(QString::number(
-                               targetTable->readDouble(*i, targetColumnID)));
+                    targetTable->ONTable::readDouble(*i, targetColumnID)));
             break;
         case ColumnType::String:
             targetValue.append(QString::fromStdString(
-                               targetTable->readString(*i, targetColumnID)));
+                    targetTable->ONTable::readString(*i, targetColumnID)));
             break;
         case ColumnType::IntegerList:
         {
-            auto rawList = targetTable->readIntList(*i, targetColumnID);
+            auto rawList =
+                    targetTable->ONTable::readIntList(*i, targetColumnID);
             for (auto j=rawList.cbegin(); j!=rawList.cend(); j++)
                 targetValue.append(',').append(QString::number(*j));
             break;
@@ -174,16 +167,13 @@ QString TableModel::referenceData(int rowIndex, int columnIndex) const
     return targetValue;
 }
 
-void TableModel::clearColumn(int columnID)
+void TableModel::clearColumn(int columnIndex)
 {
-     BaseTableModel::clearColumn(columnID);
+    BaseTableModel::clearColumn(columnIndex);
     if (rowCount() > 0)
-    {
-        int columnIndex = d->getColumnIndexByID(columnID);
         emit dataChanged(index(0, columnIndex),
                          index(rowCount() - 1, columnIndex),
                          QVector<int>(Qt::EditRole));
-    }
 }
 
 bool TableModel::setData(const QModelIndex& index,
@@ -192,24 +182,23 @@ bool TableModel::setData(const QModelIndex& index,
     if (!(index.isValid() && role == Qt::EditRole))
         return false;
 
+    int row = index.row(), column = index.column();
     bool successful = true;
-    int rowID = d->getRowID(index.row());
-    int columnID = BaseTableModel::d_ptr->columnIDList[index.column()];
-    switch (BaseTableModel::d_ptr->columnTypeIDList[index.column()])
+    switch (BaseTableModel::d_ptr->columnTypeIDList[column])
     {
         case ColumnType::Integer:
-            if (readInt(rowID, columnID) != value.toInt())
-                successful = modify(rowID, columnID, value.toInt());
+            if (readInt(row, column) != value.toInt())
+                successful = modify(row, column, value.toInt());
             break;
         case ColumnType::Double:
-            if (readDouble(rowID, columnID) != value.toDouble())
-                successful = modify(rowID, columnID, value.toDouble());
+            if (readDouble(row, column) != value.toDouble())
+                successful = modify(row, column, value.toDouble());
             break;
         case ColumnType::String:
         {
             std::string rawString = value.toString().toStdString();
-            if (readString(rowID, columnID) != rawString)
-                successful = modify(rowID, columnID, rawString);
+            if (readString(row, column) != rawString)
+                successful = modify(row, column, rawString);
             break;
         }
         case ColumnType::IntegerList:
@@ -228,8 +217,8 @@ bool TableModel::setData(const QModelIndex& index,
             integers.reserve(length);
             for (i=0; i<length; i++)
                 integers.push_back(valueList[i].toInt());
-            if (readIntList(rowID, columnID) != integers)
-                successful = modify(rowID, columnID, integers);
+            if (readIntList(row, column) != integers)
+                successful = modify(row, column, integers);
             break;
         }
         default:
@@ -258,7 +247,7 @@ bool TableModel::insertRows(int row, int count, const QModelIndex& parent)
 
     // Ignore the row parameter, as only appending operation is supported
     for (int i=0; i<count; i++)
-        newRow();
+        BaseTableModel::insertRow(row + i);
 
     endInsertRows();
     return true;
@@ -272,7 +261,9 @@ bool TableModel::insertColumns(int column, int count,
     for (int i=0; i<count; i++)
     {
         // No column type specified; default to String type
-        newColumn("New column", ColumnType::String);
+        BaseTableModel::insertColumn(column + i,
+                                     "New column",
+                                     ColumnType::String);
     }
 
     endInsertColumns();
@@ -283,14 +274,9 @@ int TableModel::newRow()
 {
     int rowIndex = countRow();
     beginInsertRows(QModelIndex(), rowIndex, rowIndex);
-    int rowID = BaseTableModel::newRow();
+    rowIndex = BaseTableModel::newRow();
     endInsertRows();
-    return rowID;
-}
-
-int TableModel::newColumn(const std::string &name, ColumnType columnType)
-{
-    return newColumn(name, columnType, 0);
+    return rowIndex;
 }
 
 int TableModel::newColumn(const std::string &name, ColumnType columnType,
@@ -298,11 +284,7 @@ int TableModel::newColumn(const std::string &name, ColumnType columnType,
 {
     int columnIndex = countColumn();
     beginInsertColumns(QModelIndex(), columnIndex, columnIndex);
-
-    int columnID = BaseTableModel::newColumn(name, columnType);
-    d->columnReferenceIDList.push_back(referenceID);
-    emit columnAdded(ID, columnID, referenceID);
-
+    int columnID = BaseTableModel::newColumn(name, columnType, referenceID);
     endInsertColumns();
     return columnID;
 }
@@ -327,7 +309,7 @@ bool TableModel::duplicateColumn(int column, const std::string& newName)
 
 void TableModel::clear()
 {
-    BaseTableModel::clear();
+    ONTable::clear();
     emit layoutChanged();
 }
 
@@ -336,12 +318,8 @@ bool TableModel::removeRows(int row, int count,
 {
     beginRemoveRows(parent, row, row + count - 1);
 
-    int rowID;
     for (int i=0; i<count; i++)
-    {
-        rowID = d->getRowID(row);
-        BaseTableModel::removeRow(rowID);
-    }
+        BaseTableModel::removeRow(row + i);
 
     endRemoveRows();
     return true;
