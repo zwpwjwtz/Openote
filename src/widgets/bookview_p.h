@@ -41,7 +41,7 @@ public:
     ClipboardModel* getClipboard();
     BookContextMenu* getContextMenu();
     DialogFind* getFindDialog();
-    DialogColumnAdd* getColumnAddDialog();
+    DialogColumnAdd* getColumnAddDialog(int tableIndex);
     
 protected:
     BookView* q_ptr;
@@ -57,6 +57,7 @@ protected slots:
     void onDialogColumnAddFinished(int result);
     void onDialogFindStart(QString text);
     void onTableDataChanged();
+    void onRowHeaderRightClicked(int index);
     void onColumnHeaderRightClicked(int index);
     void onColumnHeaderDoubleClicked(int index);
     void onGridRightClicked(int rowIndex, int columnIndex);

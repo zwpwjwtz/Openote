@@ -1,7 +1,7 @@
 #include <QMouseEvent>
 #include <QHeaderView>
 #include "tableview.h"
-#include "columnheaderview.h"
+#include "tableheaderview.h"
 
 
 TableView::TableView(QWidget* parent) :
@@ -9,11 +9,15 @@ TableView::TableView(QWidget* parent) :
 {
     tableID = 0;
 
-    columnHeader = new ColumnHeaderView(this);
+    rowHeader = new TableHeaderView(this, Qt::Vertical);
+    columnHeader = new TableHeaderView(this, Qt::Horizontal);
+    connect(rowHeader, SIGNAL(rightClicked(int)),
+            this, SIGNAL(rowHeaderRightClicked(int)));
     connect(columnHeader, SIGNAL(rightClicked(int)),
             this, SIGNAL(columnHeaderRightClicked(int)));
     connect(columnHeader, SIGNAL(leftDoubleClicked(int)),
             this, SIGNAL(columnHeaderDoubleClicked(int)));
+    setVerticalHeader(rowHeader);
     setHorizontalHeader(columnHeader);
 }
 

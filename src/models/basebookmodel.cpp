@@ -125,11 +125,6 @@ bool BaseBookModel::removeTable(int tableIndex)
         else
             i++;
     }
-
-    // Update the data of parent class
-    BaseBookModel::d_ptr->tableList.erase(
-                        BaseBookModel::d_ptr->tableList.begin() + tableIndex);
-
     return true;
 }
 
@@ -184,10 +179,14 @@ void BaseBookModel::removeColumnReference(int tableIndex, int columnIndex)
 }
 
 BaseTableModel*
-BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
+BaseBookModel::convertColumnToTable(int sourceTableIndex,
                                     int sourceColumnIndex,
                                     const std::string& newTableName)
 {
+    BaseTableModel* sourceTable = table(sourceTableIndex);
+    if (sourceTable == nullptr)
+        return nullptr;
+
     BaseTableModel* newTable = addTable(newTableName);
     if (newTable == nullptr || newTable->ID <= 0)
         return nullptr;
@@ -199,7 +198,7 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
 
     // Get values in the source column, remove duplicated values,
     // then fill the new column by unique values
-    int targetColumnID = newTable->newColumn(columnName, columnType);
+    int targetColumnIndex = newTable->newColumn(columnName, columnType);
     std::list<int> IDList = sourceTable->IDs(), newIDList;
     std::map<int, int> indexMap;
     std::list<int>::const_iterator i = IDList.cbegin();
@@ -211,7 +210,7 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
             for (; i!=IDList.cend(); i++)
                 intList.push_back(sourceTable->readInt(*i, sourceColumnIndex));
             BaseBookModelPrivate::removeDuplicate<int>(intList, indexMap);
-            newIDList = newTable->insert(targetColumnID, intList);
+            newIDList = newTable->insert(targetColumnIndex, intList);
             break;
         }
         case BaseTableModel::Double:
@@ -221,7 +220,7 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
                 doubleList.push_back(
                             sourceTable->readDouble(*i, sourceColumnIndex));
             BaseBookModelPrivate::removeDuplicate<double>(doubleList, indexMap);
-            newIDList = newTable->insert(targetColumnID, doubleList);
+            newIDList = newTable->insert(targetColumnIndex, doubleList);
             break;
         }
         case BaseTableModel::String:
@@ -232,7 +231,7 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
                             sourceTable->readString(*i, sourceColumnIndex));
             BaseBookModelPrivate::removeDuplicate<std::string>(stringList,
                                                                indexMap);
-            newIDList = newTable->insert(targetColumnID, stringList);
+            newIDList = newTable->insert(targetColumnIndex, stringList);
             break;
         }
         case BaseTableModel::IntegerList:
@@ -243,7 +242,7 @@ BaseBookModel::convertColumnToTable(BaseTableModel* sourceTable,
                              sourceTable->readIntList(*i, sourceColumnIndex));
             BaseBookModelPrivate::removeDuplicate<std::vector<int>>(intListList,
                                                                     indexMap);
-            newIDList = newTable->insert(targetColumnID, intListList);
+            newIDList = newTable->insert(targetColumnIndex, intListList);
             break;
         }
         default:;

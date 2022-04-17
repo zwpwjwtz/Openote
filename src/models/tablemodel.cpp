@@ -20,9 +20,12 @@ TableModel::TableModel(const TableModel &src)
 QVariant TableModel::headerData(int section, Qt::Orientation orientation,
                                 int role) const
 {
-    if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
+    if (role != Qt::DisplayRole)
         return QVariant();
-    return QString::fromStdString(columnName(section));
+    if (orientation == Qt::Vertical)
+        return d->rowHeaderPlaceholder;
+    else
+        return QString::fromStdString(columnName(section));
 }
 
 bool TableModel::setHeaderData(int section, Qt::Orientation orientation,
@@ -241,31 +244,20 @@ Qt::ItemFlags TableModel::flags(const QModelIndex& index) const
     return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
 }
 
-bool TableModel::insertRows(int row, int count, const QModelIndex& parent)
+bool TableModel::insertRow(int row)
 {
-    beginInsertRows(parent, row, row + count - 1);
-
-    // Ignore the row parameter, as only appending operation is supported
-    for (int i=0; i<count; i++)
-        BaseTableModel::insertRow(row + i);
-
+    beginInsertRows(QModelIndex(), row, row);
+    BaseTableModel::insertRow(row);
     endInsertRows();
     return true;
 }
 
-bool TableModel::insertColumns(int column, int count,
-                               const QModelIndex& parent)
+bool TableModel::insertColumn(int column, const QString& name,
+                              ColumnType type, int referenceTableID)
 {
-    beginInsertColumns(parent, column, column + count - 1);
-
-    for (int i=0; i<count; i++)
-    {
-        // No column type specified; default to String type
-        BaseTableModel::insertColumn(column + i,
-                                     "New column",
-                                     ColumnType::String);
-    }
-
+    beginInsertColumns(QModelIndex(), column, column);
+    BaseTableModel::insertColumn(column, name.toStdString(),
+                                 type, referenceTableID);
     endInsertColumns();
     return true;
 }

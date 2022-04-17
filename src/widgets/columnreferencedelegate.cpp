@@ -43,38 +43,38 @@ ColumnReferenceDelegate::createEditor(QWidget* parent,
 
     // Load all data in the referred column into a list
     int referredColumn = 0;
+    int rowCount = referenceTable->rowCount();
     auto columnType = referenceTable->columnType(referredColumn);
-    auto rowIDs = referenceTable->IDs();
 
     ColumnReferenceSelector* listEditor = new ColumnReferenceSelector(parent);
     listEditor->setProperty(OPENOTE_DELEGATE_EDITOR_PROP_TABLE, table->ID);
     listEditor->setProperty(OPENOTE_DELEGATE_EDITOR_PROP_COL, index.column());
     connect(listEditor, &ColumnReferenceSelector::addingItemRequested,
             this, &ColumnReferenceDelegate::onEditorAddingItemRequested);
-    for (auto i=rowIDs.cbegin(); i!=rowIDs.cend(); i++)
+    for (int i=0; i<rowCount; i++)
     {
         switch (columnType)
         {
             case TableModel::ColumnType::Integer:
-                listEditor->addItem(*i,
-                            referenceTable->readInt(*i, referredColumn));
+                listEditor->addItem(referenceTable->rowID(i),
+                            referenceTable->readInt(i, referredColumn));
                 break;
             case TableModel::ColumnType::Double:
-                listEditor->addItem(*i,
-                            referenceTable->readDouble(*i, referredColumn));
+                listEditor->addItem(referenceTable->rowID(i),
+                            referenceTable->readDouble(i, referredColumn));
                 break;
             case TableModel::ColumnType::String:
-                listEditor->addItem(*i,
+                listEditor->addItem(referenceTable->rowID(i),
                     QString::fromStdString(
-                            referenceTable->readString(*i, referredColumn)));
+                            referenceTable->readString(i, referredColumn)));
                 break;
             case TableModel::ColumnType::IntegerList:
             {
                 QString displayedString;
-                auto values = referenceTable->readIntList(*i, referredColumn);
+                auto values = referenceTable->readIntList(i, referredColumn);
                 for (auto j=values.cbegin(); j!=values.cend(); j++)
                     displayedString.append(*j);
-                listEditor->addItem(*i, displayedString);
+                listEditor->addItem(referenceTable->rowID(i), displayedString);
                 break;
             }
             default:;
@@ -162,12 +162,10 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
     if (tableID < 1 || column < 0)
         return;
 
-    TableModel* table = book->table(tableID);
-    TableModel* referenceTable = book->columnReferenceTable(table->ID, column);
-
-    int rowID;
+    int rowIndex;
     int referredColumn = 0;
     bool conversionOK = true, successful = false;
+    TableModel* referenceTable = book->columnReferenceTable(tableID, column);
     switch (referenceTable->columnType(referredColumn))
     {
         case TableModel::ColumnType::Integer:
@@ -176,8 +174,8 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
             int intValue = text.toInt(&conversionOK);
             if (conversionOK)
             {
-                rowID = referenceTable->newRow();
-                successful = referenceTable->modify(rowID, referredColumn,
+                rowIndex = referenceTable->newRow();
+                successful = referenceTable->modify(rowIndex, referredColumn,
                                                     intValue);
             }
             break;
@@ -188,8 +186,8 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
             double doubleValue = text.toDouble(&conversionOK);
             if (conversionOK)
             {
-                rowID = referenceTable->newRow();
-                successful = referenceTable->modify(rowID, referredColumn,
+                rowIndex = referenceTable->newRow();
+                successful = referenceTable->modify(rowIndex, referredColumn,
                                                     doubleValue);
             }
             break;
@@ -197,8 +195,8 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
         case TableModel::ColumnType::String:
         {
             std::string stringValue = text.toStdString();
-            rowID = referenceTable->newRow();
-            successful = referenceTable->modify(rowID, referredColumn,
+            rowIndex = referenceTable->newRow();
+            successful = referenceTable->modify(rowIndex, referredColumn,
                                                 stringValue);
             break;
         }
@@ -217,8 +215,8 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
             }
             if (conversionOK)
             {
-                rowID = referenceTable->newRow();
-                successful = referenceTable->modify(rowID, referredColumn,
+                rowIndex = referenceTable->newRow();
+                successful = referenceTable->modify(rowIndex, referredColumn,
                                                     integers);
             }
             break;
@@ -231,5 +229,5 @@ void ColumnReferenceDelegate::onEditorAddingItemRequested(
                              "value type of the referred column.\n"
                              "Please try to add rows manually."));
     if (successful)
-        editor->addItem(rowID, text);
+        editor->addItem(referenceTable->rowID(rowIndex), text);
 }

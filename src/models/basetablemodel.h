@@ -16,6 +16,8 @@ public:
     bool bindBookModel(BaseBookModel *model);
     bool setColumnReference(int columnIndex, int referenceID);
 
+    int rowID(int rowIndex) const;
+
     void clear(int rowIndex, int columnIndex);
     void clearRow(int rowIndex);
     void clearColumn(int columnIndex);
@@ -63,7 +65,6 @@ protected:
     BaseTableModelPrivate* d;
 
     BaseTableModel(BaseTableModelPrivate* data);
-    int rowID(int rowIndex) const;
     int columnID(int columnIndex) const;
     int columnIndex(int columnID) const;
 

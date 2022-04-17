@@ -28,13 +28,16 @@ public:
     double defaultDoubleValue;
     std::string defaultStringValue;
 
-    virtual int getColumnIndexByID(int columnID) const;
-    virtual std::string getIndexFilename() const;
-    virtual std::string getColumnFilename(int columnID) const;
+    int getColumnIndexByID(int columnID) const;
+    std::string getIndexFilename() const;
+    std::string getColumnFilename(int columnID) const;
 
     virtual bool loadColumn(int columnID, int columnType,
                             const std::string& columnName);
-    virtual bool saveColumn(int columnIndex);
+    virtual bool saveColumn(int columnIndex) const;
+
+    virtual bool loadIDList();
+    virtual bool saveIDList() const;
 };
 
 #endif // ONTABLE_P_H

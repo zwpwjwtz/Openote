@@ -63,12 +63,8 @@ TableModel* BookModel::convertColumnToTable(int sourceTableIndex,
                                             int sourceColumnIndex,
                                             const QString& newTableName)
 {
-    auto sourceTable = d_ptr->table(sourceTableIndex);
-    if (sourceTable == nullptr)
-        return nullptr;
-
     return static_cast<TableModel*>
-                    (d_ptr->convertColumnToTable(sourceTable,
+                    (d_ptr->convertColumnToTable(sourceTableIndex,
                                                  sourceColumnIndex,
                                                  newTableName.toStdString()));
 }

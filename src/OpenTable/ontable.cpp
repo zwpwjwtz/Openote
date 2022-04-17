@@ -155,10 +155,18 @@ int ONTable::newRow()
     if (d_ptr->columnList.size() == 0)
         return 0;
 
-    // Assuming increasing ID of row in the list
-    int availableID = d_ptr->IDList.size() > 0 ?
-                      d_ptr->IDList.back() + 1 :
-                      1;
+    int availableID = 1;
+    std::list<int>::const_iterator i;
+    for (i=d_ptr->IDList.cbegin(); i!=d_ptr->IDList.cend(); i++)
+    {
+        if (*i >= availableID)
+        {
+            if (availableID == INT32_MAX)
+                return -1;
+            availableID = *i + 1;
+        }
+    }
+
     for (size_t i=0; i<d_ptr->columnList.size(); i++)
         d_ptr->columnList[i]->set(availableID, nullptr);
     d_ptr->IDList.push_back(availableID);
@@ -167,10 +175,17 @@ int ONTable::newRow()
 
 int ONTable::newColumn(const std::string& name, ColumnType columnType)
 {
-    // Assuming increasing ID of column in the list
-    int availableID = d_ptr->columnList.size() > 0 ?
-                      d_ptr->columnList.back()->ID + 1 :
-                      1;
+    int availableID = 1;
+    std::vector<int>::const_iterator i;
+    for (i=d_ptr->columnIDList.cbegin(); i!=d_ptr->columnIDList.cend(); i++)
+    {
+        if (*i >= availableID)
+        {
+            if (availableID == INT32_MAX)
+                return -1;
+            availableID = *i + 1;
+        }
+    }
 
     ONTableColumn* emptyColumn;
     switch (columnType)
@@ -554,6 +569,7 @@ bool ONTable::load()
 
     clear();
 
+    // Load each column
     char* pos, *posS, *posE;
     int columnID, columnTypeID;
     std::string columnName;
@@ -588,6 +604,11 @@ bool ONTable::load()
         }
     }
     fclose(f);
+
+    // Load record IDs
+    if (!d_ptr->loadIDList())
+        return false;
+
     return true;
 }
 
@@ -599,6 +620,9 @@ bool ONTable::save()
         if (!d_ptr->saveColumn(i))
             return false;
     }
+
+    if (!d_ptr->saveIDList())
+        return false;
 
     // Update the index file
     FILE* f = fopen(d_ptr->getIndexFilename().c_str(), "wb");
@@ -748,18 +772,10 @@ bool ONTablePrivate::loadColumn(int columnID, int columnType,
     columnTypeIDList.push_back(newColumn->typeID);
     columnNameList.push_back(columnName);
 
-    // Use the IDs of the first column as the record IDs
-    if (IDList.size() == 0)
-    {
-        int* keyList = newColumn->keys();
-        for (int j=0; j<newColumn->length(); j++)
-            IDList.push_back(keyList[j]);
-        delete[] keyList;
-    }
     return true;
 }
 
-bool ONTablePrivate::saveColumn(int columnIndex)
+bool ONTablePrivate::saveColumn(int columnIndex) const
 {
     // TODO: save bindingFilename for each columns before saving
     ONTableColumn* column = columnList[columnIndex];
@@ -768,7 +784,6 @@ bool ONTablePrivate::saveColumn(int columnIndex)
     oldFilename = column->bindingFile() == nullptr ?
                   "" :
                   column->bindingFile();
-    filename.str("");
     filename << bindingDirectory
              << "/"
              << column->ID
@@ -781,4 +796,68 @@ bool ONTablePrivate::saveColumn(int columnIndex)
         column->setBindingFile(oldFilename.c_str());
         return false;
     }
+}
+
+bool ONTablePrivate::loadIDList()
+{
+    int ID;
+    std::stringstream filename;
+    filename << bindingDirectory << "/0" << fileSuffix;
+    if (!utils_isFile(filename.str().c_str()))
+    {
+        // ID list is missing; reconstruct it using IDs found in all columns
+        // The order of records is not guaranteed
+        std::vector<ONTableColumn*>::const_iterator c;
+        std::list<int>::iterator j;
+        int* tempIDList;
+        int i;
+        for (c=columnList.cbegin(); c!=columnList.cend(); c++)
+        {
+            tempIDList = (*c)->keys();
+            if (tempIDList == nullptr)
+                continue;
+
+            for (i=0; i<(*c)->length(); i++)
+            {
+                for (j=IDList.begin(); j!=IDList.end(); j++)
+                {
+                    if (tempIDList[i] == *j)
+                        break;
+                }
+                if (j == IDList.end())
+                    IDList.push_back(tempIDList[i]);
+            }
+            delete[] tempIDList;
+        }
+        return true;
+    }
+
+    FILE* f = fopen(filename.str().c_str(), "rb");
+    if (!f)
+        return false;
+
+    while (!feof(f))
+    {
+        fscanf(f, "%d\n", &ID);
+        if (ID > 0)
+            IDList.push_back(ID);
+    }
+    fclose(f);
+    return true;
+}
+
+bool ONTablePrivate::saveIDList() const
+{
+    std::stringstream filename;
+    filename << bindingDirectory << "/0" << fileSuffix;
+
+    FILE* f = fopen(filename.str().c_str(), "wb");
+    if (!f)
+        return false;
+
+    std::list<int>::const_iterator i;
+    for (i=IDList.cbegin(); i!=IDList.cend(); i++)
+        fprintf(f, "%d\n", *i);
+    fclose(f);
+    return true;
 }

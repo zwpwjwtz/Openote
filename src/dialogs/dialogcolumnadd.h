@@ -19,6 +19,7 @@ public:
     bool referring;
     int typeIndex;
     int referenceIndex;
+    int insertPosition;
     QList<QString> referenceList;
 
     explicit DialogColumnAdd(QWidget *parent = nullptr);

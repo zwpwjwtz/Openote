@@ -18,7 +18,7 @@ public:
     BaseTableModel* newTable();
     BaseTableModel* addTable(const std::string& tableName);
     BaseTableModel*
-    convertColumnToTable(BaseTableModel* sourceTable,
+    convertColumnToTable(int sourceTableIndex,
                          int sourceColumnIndex,
                          const std::string& newTableName);
     BaseTableModel* duplicateTable(int tableIndex, const std::string& newName);

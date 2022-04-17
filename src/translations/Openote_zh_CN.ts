@@ -30,34 +30,54 @@
     </message>
     <message>
         <location filename="../widgets/bookcontextmenu.cpp" line="60"/>
+        <source>Insert column before</source>
+        <translation>左侧插入一列</translation>
+    </message>
+    <message>
+        <location filename="../widgets/bookcontextmenu.cpp" line="61"/>
+        <source>Insert column after</source>
+        <translation>右侧插入一列</translation>
+    </message>
+    <message>
+        <location filename="../widgets/bookcontextmenu.cpp" line="63"/>
         <source>Delete column</source>
         <translation>删除列</translation>
     </message>
     <message>
-        <location filename="../widgets/bookcontextmenu.cpp" line="61"/>
+        <location filename="../widgets/bookcontextmenu.cpp" line="64"/>
         <source>Duplicate column</source>
         <translation>复制列</translation>
     </message>
     <message>
-        <location filename="../widgets/bookcontextmenu.cpp" line="63"/>
+        <location filename="../widgets/bookcontextmenu.cpp" line="66"/>
         <source>Rename column</source>
         <translation>重命名列</translation>
     </message>
     <message>
-        <location filename="../widgets/bookcontextmenu.cpp" line="75"/>
-        <location filename="../widgets/bookcontextmenu.cpp" line="91"/>
+        <location filename="../widgets/bookcontextmenu.cpp" line="78"/>
+        <location filename="../widgets/bookcontextmenu.cpp" line="97"/>
         <source>New row</source>
         <translation>添加行</translation>
     </message>
     <message>
-        <location filename="../widgets/bookcontextmenu.cpp" line="78"/>
-        <location filename="../widgets/bookcontextmenu.cpp" line="94"/>
+        <location filename="../widgets/bookcontextmenu.cpp" line="81"/>
+        <source>Insert row above</source>
+        <translation>上方插入一行</translation>
+    </message>
+    <message>
+        <location filename="../widgets/bookcontextmenu.cpp" line="82"/>
+        <source>Insert row below</source>
+        <translation>下方插入一行</translation>
+    </message>
+    <message>
+        <location filename="../widgets/bookcontextmenu.cpp" line="84"/>
+        <location filename="../widgets/bookcontextmenu.cpp" line="100"/>
         <source>Delete row</source>
         <translation>删除行</translation>
     </message>
     <message>
-        <location filename="../widgets/bookcontextmenu.cpp" line="79"/>
-        <location filename="../widgets/bookcontextmenu.cpp" line="95"/>
+        <location filename="../widgets/bookcontextmenu.cpp" line="85"/>
+        <location filename="../widgets/bookcontextmenu.cpp" line="101"/>
         <source>Duplicate row</source>
         <translation>复制行</translation>
     </message>
@@ -65,102 +85,104 @@
 <context>
     <name>BookView</name>
     <message>
-        <location filename="../widgets/bookview.cpp" line="92"/>
+        <location filename="../widgets/bookview.cpp" line="89"/>
         <source>Table1</source>
         <translation>表格1</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="97"/>
+        <location filename="../widgets/bookview.cpp" line="94"/>
         <source>New Column</source>
         <translation>新列</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="195"/>
+        <location filename="../widgets/bookview.cpp" line="193"/>
         <source>Duplicate a column</source>
         <translation>复制列</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="196"/>
+        <location filename="../widgets/bookview.cpp" line="194"/>
         <source>New column name:</source>
         <translation>新的列名：</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="220"/>
+        <location filename="../widgets/bookview.cpp" line="218"/>
         <source>Rename a column</source>
         <translation>重命名列</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="221"/>
+        <location filename="../widgets/bookview.cpp" line="219"/>
         <source>New name for the column:</source>
         <translation>新的列名：</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="247"/>
+        <location filename="../widgets/bookview.cpp" line="244"/>
         <source>Convert a column to table</source>
         <translation>转换列为表格</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="248"/>
+        <location filename="../widgets/bookview.cpp" line="245"/>
         <source>New table name</source>
         <translation>新表格名</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="277"/>
+        <location filename="../widgets/bookview.cpp" line="275"/>
+        <location filename="../widgets/bookview.cpp" line="294"/>
         <source>No column presents</source>
         <translation>表格中没有列</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="278"/>
+        <location filename="../widgets/bookview.cpp" line="276"/>
+        <location filename="../widgets/bookview.cpp" line="295"/>
         <source>Please add a column before adding rows.</source>
         <translation>在添加行之前，请先添加列。</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="318"/>
+        <location filename="../widgets/bookview.cpp" line="335"/>
         <source>Add a table</source>
         <translation>添加表格</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="319"/>
+        <location filename="../widgets/bookview.cpp" line="336"/>
         <source>Table name:</source>
         <translation>表格名称：</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="321"/>
+        <location filename="../widgets/bookview.cpp" line="338"/>
         <source>NewTable</source>
         <translation>新表格</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="344"/>
+        <location filename="../widgets/bookview.cpp" line="360"/>
         <source>Delete a table</source>
         <translation>删除表格</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="345"/>
+        <location filename="../widgets/bookview.cpp" line="361"/>
         <source>Are you sure to delete table %1 ?</source>
         <translation>您确定要删除表格 %1 吗？</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="369"/>
+        <location filename="../widgets/bookview.cpp" line="384"/>
         <source>Duplicate a table</source>
         <translation>复制表格</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="370"/>
+        <location filename="../widgets/bookview.cpp" line="385"/>
         <source>New table name:</source>
         <translation>新表格名：</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="372"/>
+        <location filename="../widgets/bookview.cpp" line="387"/>
         <source>%1_copy</source>
         <translation>%1副本</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="400"/>
+        <location filename="../widgets/bookview.cpp" line="414"/>
         <source>Rename a table</source>
         <translation>重命名表格</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="401"/>
+        <location filename="../widgets/bookview.cpp" line="415"/>
         <source>New name for the table:</source>
         <translation>新表格的名称：</translation>
     </message>
@@ -168,46 +190,56 @@
 <context>
     <name>BookViewPrivate</name>
     <message>
-        <location filename="../widgets/bookview.cpp" line="706"/>
+        <location filename="../widgets/bookview.cpp" line="620"/>
         <source>One match found</source>
         <translation>找到一个匹配项</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="707"/>
+        <location filename="../widgets/bookview.cpp" line="621"/>
         <source>The searched text was found in only one item.</source>
         <translation>只找到一个匹配的项目。</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="712"/>
-        <location filename="../widgets/bookview.cpp" line="716"/>
+        <location filename="../widgets/bookview.cpp" line="634"/>
+        <location filename="../widgets/bookview.cpp" line="638"/>
         <source>No matched item</source>
         <translation>找不到匹配内容</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="713"/>
+        <location filename="../widgets/bookview.cpp" line="635"/>
         <source>The searched text was not found in any tables.</source>
         <translation>所有表格中都没有匹配的内容。</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="717"/>
+        <location filename="../widgets/bookview.cpp" line="639"/>
         <source>The searched text was not found in the current table.</source>
         <translation>当前表中没有匹配的内容。</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="772"/>
-        <location filename="../widgets/bookview.cpp" line="789"/>
+        <location filename="../widgets/bookview.cpp" line="699"/>
+        <source>Column name cannot be empty</source>
+        <translation>列名不能为空</translation>
+    </message>
+    <message>
+        <location filename="../widgets/bookview.cpp" line="700"/>
+        <source>Please specify a name for the new column.</source>
+        <translation>请为要添加的列指定一个名称。</translation>
+    </message>
+    <message>
+        <location filename="../widgets/bookview.cpp" line="712"/>
+        <location filename="../widgets/bookview.cpp" line="731"/>
         <source>Failed creating column</source>
         <translation>创建列失败</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="773"/>
+        <location filename="../widgets/bookview.cpp" line="713"/>
         <source>Creating a column referring to its parent table is not allowed. 
 Please select another reference table.</source>
         <translation>无法创建指向自身表格的列。
 请选择其他的引用表格。</translation>
     </message>
     <message>
-        <location filename="../widgets/bookview.cpp" line="790"/>
+        <location filename="../widgets/bookview.cpp" line="732"/>
         <source>An error occurred when creating a column referring to another table.</source>
         <translation>创建指向其他表格的列时出错。</translation>
     </message>
@@ -215,12 +247,12 @@ Please select another reference table.</source>
 <context>
     <name>ColumnReferenceDelegate</name>
     <message>
-        <location filename="../widgets/columnreferencedelegate.cpp" line="231"/>
+        <location filename="../widgets/columnreferencedelegate.cpp" line="227"/>
         <source>Value format mismatch</source>
         <translation>值的类型不匹配</translation>
     </message>
     <message>
-        <location filename="../widgets/columnreferencedelegate.cpp" line="232"/>
+        <location filename="../widgets/columnreferencedelegate.cpp" line="228"/>
         <source>The input text cannot be convert to value type of the referred column.
 Please try to add rows manually.</source>
         <translation>无法将输入的内容转换为与目标列匹配的类型。
@@ -383,17 +415,27 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
         <translation>所有表（&amp;A）</translation>
     </message>
     <message>
-        <location filename="../dialogs/dialogfind.ui" line="103"/>
+        <location filename="../dialogs/dialogfind.ui" line="100"/>
+        <source>Option: </source>
+        <translation>选项：</translation>
+    </message>
+    <message>
+        <location filename="../dialogs/dialogfind.ui" line="113"/>
+        <source>Case sensitive</source>
+        <translation>区分大小写</translation>
+    </message>
+    <message>
+        <location filename="../dialogs/dialogfind.ui" line="130"/>
         <source>Find next</source>
         <translation>查找下一个</translation>
     </message>
     <message>
-        <location filename="../dialogs/dialogfind.ui" line="116"/>
+        <location filename="../dialogs/dialogfind.ui" line="143"/>
         <source>Find previous</source>
         <translation>查找上一个</translation>
     </message>
     <message>
-        <location filename="../dialogs/dialogfind.ui" line="123"/>
+        <location filename="../dialogs/dialogfind.ui" line="150"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
@@ -416,14 +458,12 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
         <translation>语言：</translation>
     </message>
     <message>
-        <location filename="../dialogs/dialogpreference.ui" line="52"/>
         <source>English</source>
-        <translation>English</translation>
+        <translation type="vanished">English</translation>
     </message>
     <message>
-        <location filename="../dialogs/dialogpreference.ui" line="57"/>
         <source>简体中文</source>
-        <translation>简体中文</translation>
+        <translation type="vanished">简体中文</translation>
     </message>
 </context>
 <context>

@@ -145,26 +145,29 @@ bool BookView::addColumn()
     if (index.table < 0)
         return false;
 
-    DialogColumnAdd* dialog = d_ptr->getColumnAddDialog();
-    if (dialog == nullptr)
-    {
-        dialog = new DialogColumnAdd(this);
-        connect(dialog, SIGNAL(finished(int)),
-                d_ptr, SLOT(onDialogColumnAddFinished(int)));
-    }
-    if (d_ptr->book.table(index.table)->countColumn() < 1)
-    {
-        dialog->enableReference = false;
-        dialog->referring = false;
-    }
+    DialogColumnAdd* dialog = d_ptr->getColumnAddDialog(index.table);
+    dialog->insertPosition = -1;
+    dialog->open();
+    return true;
+}
+
+bool BookView::insertColumn(bool beforeCurrent)
+{
+    auto index = d_ptr->getCurrentIndex();
+    if (index.table < 0)
+        return false;
+
+    DialogColumnAdd* dialog = d_ptr->getColumnAddDialog(index.table);
+    if (beforeCurrent)
+        dialog->insertPosition = index.column;
     else
     {
-        dialog->enableReference = true;
-        dialog->referenceList.clear();
-        for (int i=0; i<d_ptr->book.tableCount(); i++)
-            dialog->referenceList.push_back(d_ptr->book.getTableName(i));
+        index.column++;
+        if (index.column < d_ptr->book.table(index.table)->countColumn())
+            dialog->insertPosition = index.column;
+        else
+            dialog->insertPosition = -1;
     }
-
     dialog->open();
     return true;
 }
@@ -274,6 +277,25 @@ bool BookView::addRow()
         return false;
     }
     table->newRow();
+
+    d_ptr->isModified = true;
+    return true;
+}
+
+bool BookView::insertRow(bool beforeCurrent)
+{
+    auto index = d_ptr->getCurrentIndex();
+    if (index.table < 0)
+        return false;
+
+    TableModel* table = d_ptr->book.table(index.table);
+    if (table->countColumn() == 0)
+    {
+        QMessageBox::warning(this, tr("No column presents"),
+                             tr("Please add a column before adding rows."));
+        return false;
+    }
+    table->insertRow(beforeCurrent ? index.row : index.row + 1);
 
     d_ptr->isModified = true;
     return true;
@@ -548,6 +570,8 @@ void BookViewPrivate::bindTableView(TableView* table, TableModel* model)
     table->setID(model->ID);
     table->setItemDelegate(referenceDelegate);
 
+    connect(table, SIGNAL(rowHeaderRightClicked(int)),
+            this, SLOT(onRowHeaderRightClicked(int)));
     connect(table, SIGNAL(columnHeaderRightClicked(int)),
             this, SLOT(onColumnHeaderRightClicked(int)));
     connect(table, SIGNAL(columnHeaderDoubleClicked(int)),
@@ -642,7 +666,7 @@ DialogFind* BookViewPrivate::getFindDialog()
     return dialogFind;
 }
 
-DialogColumnAdd* BookViewPrivate::getColumnAddDialog()
+DialogColumnAdd* BookViewPrivate::getColumnAddDialog(int tableIndex)
 {
     if (dialogColumnAdd == nullptr)
     {
@@ -650,13 +674,33 @@ DialogColumnAdd* BookViewPrivate::getColumnAddDialog()
         connect(dialogColumnAdd, SIGNAL(finished(int)),
                 this, SLOT(onDialogColumnAddFinished(int)));
     }
+    if (book.table(tableIndex)->countColumn() < 1)
+    {
+        dialogColumnAdd->enableReference = false;
+        dialogColumnAdd->referring = false;
+    }
+    else
+    {
+        dialogColumnAdd->enableReference = true;
+        dialogColumnAdd->referenceList.clear();
+        for (int i=0; i<book.tableCount(); i++)
+            dialogColumnAdd->referenceList.push_back(book.getTableName(i));
+    }
     return dialogColumnAdd;
 }
 
 void BookViewPrivate::onDialogColumnAddFinished(int result)
 {
-    if (result == QDialog::Rejected || dialogColumnAdd->newName.isEmpty())
+    if (result == QDialog::Rejected)
         return;
+
+    if (dialogColumnAdd->newName.isEmpty())
+    {
+        QMessageBox::warning(q_ptr, tr("Column name cannot be empty"),
+                             tr("Please specify a name for the new column."));
+        dialogColumnAdd->open();
+        return;
+    }
 
     TableModel* table = book.table(lastIndex.table);
     TableModel* referredTable = nullptr;
@@ -674,12 +718,15 @@ void BookViewPrivate::onDialogColumnAddFinished(int result)
         }
     }
 
-    std::string newName = dialogColumnAdd->newName.toStdString();
+    if (dialogColumnAdd->insertPosition < 0)
+        dialogColumnAdd->insertPosition = table->columnCount();
+
     if (dialogColumnAdd->referring)
     {
-        if (table->newColumn(newName,
-                             TableModel::ColumnType::IntegerList,
-                             referredTable->ID) <= 0)
+        if (!table->insertColumn(dialogColumnAdd->insertPosition,
+                                dialogColumnAdd->newName,
+                                TableModel::ColumnType::IntegerList,
+                                referredTable->ID))
         {
             QMessageBox::critical(q_ptr, tr("Failed creating column"),
                                   tr("An error occurred when creating a column "
@@ -692,13 +739,19 @@ void BookViewPrivate::onDialogColumnAddFinished(int result)
         switch (dialogColumnAdd->typeIndex)
         {
             case 0:  // Integer
-                table->newColumn(newName, TableModel::ColumnType::Integer);
+                table->insertColumn(dialogColumnAdd->insertPosition,
+                                    dialogColumnAdd->newName,
+                                    TableModel::ColumnType::Integer);
                 break;
             case 1:  // Double
-                table->newColumn(newName, TableModel::ColumnType::Double);
+                table->insertColumn(dialogColumnAdd->insertPosition,
+                                    dialogColumnAdd->newName,
+                                    TableModel::ColumnType::Double);
                 break;
             case 2:  // String
-                table->newColumn(newName, TableModel::ColumnType::String);
+                table->insertColumn(dialogColumnAdd->insertPosition,
+                                    dialogColumnAdd->newName,
+                                    TableModel::ColumnType::String);
                 break;
             default:;
         }
@@ -722,6 +775,12 @@ void BookViewPrivate::onColumnHeaderRightClicked(int index)
 {
     contextMenu->setColumnIsActive(index >= 0);
     contextMenu->showColumnMenu();
+}
+
+void BookViewPrivate::onRowHeaderRightClicked(int index)
+{
+    contextMenu->setRowIsActive(index >= 0);
+    contextMenu->showRowMenu();
 }
 
 void BookViewPrivate::onColumnHeaderDoubleClicked(int index)

@@ -11,8 +11,8 @@ BookContextMenu::BookContextMenu(QObject* parent) : QObject(parent)
         menuList.push_back(nullptr);
 
     hasActiveTable = false;
+    hasActiveRow = false;
     hasActiveColumn = false;
-    hasActiveGrid = false;
 }
 
 BookContextMenu::~BookContextMenu()
@@ -57,6 +57,9 @@ void BookContextMenu::showColumnMenu(QPoint pos)
     addAction(menu, tr("New column"), ActionType::Adding);
     if (hasActiveColumn)
     {
+        addAction(menu, tr("Insert column before"), ActionType::InsertingAhead);
+        addAction(menu, tr("Insert column after"), ActionType::InsertingAfter);
+        addSeparator(menu);
         addAction(menu, tr("Delete column"), ActionType::Deleting);
         addAction(menu, tr("Duplicate column"), ActionType::Duplicating);
         addSeparator(menu);
@@ -73,8 +76,11 @@ void BookContextMenu::showRowMenu(QPoint pos)
     QMenu* menu = getMenu(MenuType::RowMenu);
     menu->clear();
     addAction(menu, tr("New row"), ActionType::Adding);
-    if (hasActiveGrid)
+    if (hasActiveRow)
     {
+        addAction(menu, tr("Insert row above"), ActionType::InsertingAhead);
+        addAction(menu, tr("Insert row below"), ActionType::InsertingAfter);
+        addSeparator(menu);
         addAction(menu, tr("Delete row"), ActionType::Deleting);
         addAction(menu, tr("Duplicate row"), ActionType::Duplicating);
     }
@@ -89,7 +95,7 @@ void BookContextMenu::showGridMenu(QPoint pos)
     QMenu* menu = getMenu(MenuType::GridMenu);
     menu->clear();
     addAction(menu, tr("New row"), ActionType::AddingRow);
-    if (hasActiveGrid)
+    if (hasActiveRow && hasActiveColumn)
     {
         addAction(menu, tr("Delete row"), ActionType::DeletingRow);
         addAction(menu, tr("Duplicate row"), ActionType::DuplicatingRow);
@@ -102,16 +108,19 @@ void BookContextMenu::setTableIsActive(bool hasFocus)
     hasActiveTable = hasFocus;
 }
 
+void BookContextMenu::setRowIsActive(bool hasFocus)
+{
+    hasActiveTable = hasActiveRow = hasFocus;
+}
+
 void BookContextMenu::setColumnIsActive(bool hasFocus)
 {
-    hasActiveColumn = hasFocus;
+    hasActiveTable = hasActiveColumn = hasFocus;
 }
 
 void BookContextMenu::setGridIsActive(bool hasFocus)
 {
-    hasActiveGrid = hasFocus;
-    if (hasFocus)
-        hasActiveTable = hasActiveColumn = true;
+    hasActiveTable = hasActiveColumn = hasActiveRow = true;
 }
 
 QMenu* BookContextMenu::getMenu(MenuType type)

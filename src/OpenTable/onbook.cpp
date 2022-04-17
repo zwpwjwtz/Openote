@@ -51,6 +51,7 @@ void ONBook::clear()
     d_ptr->tableList.clear();
     d_ptr->tableIDList.clear();
     d_ptr->tableNameList.clear();
+    d_ptr->columnReference.clear();
 }
 
 ONTable* ONBook::table(int tableID) const
@@ -378,7 +379,6 @@ bool ONBookPrivate::saveTable(int tableIndex)
     oldDirectory = table->bindingDirectory() == "" ?
                    "" :
                    table->bindingDirectory();
-    directory.str("");
     directory << bindingDirectory << "/" << table->ID;
     table->setBindingDirectory(directory.str());
     if (table->save())

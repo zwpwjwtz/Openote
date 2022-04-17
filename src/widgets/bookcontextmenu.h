@@ -29,12 +29,14 @@ public:
         Deleting = 2,
         Duplicating = 3,
         Renaming = 4,
-        AddingColumn = 5,
-        AddingRow = 6,
-        DeletingColumn = 7,
-        DeletingRow = 8,
-        DuplicatingColumn = 9,
-        DuplicatingRow = 10
+        InsertingAhead = 5,
+        InsertingAfter = 6,
+        AddingColumn = 65,
+        AddingRow = 66,
+        DeletingColumn = 67,
+        DeletingRow = 68,
+        DuplicatingColumn = 69,
+        DuplicatingRow = 70
     };
 
     explicit BookContextMenu(QObject* parent = nullptr);
@@ -49,6 +51,7 @@ public slots:
     void showGridMenu(QPoint pos = QPoint());
 
     void setTableIsActive(bool active = true);
+    void setRowIsActive(bool active = true);
     void setColumnIsActive(bool active = true);
     void setGridIsActive(bool active = true);
 
@@ -61,7 +64,7 @@ private:
     QList<QMenu*> menuList;
     bool hasActiveTable;
     bool hasActiveColumn;
-    bool hasActiveGrid;
+    bool hasActiveRow;
 
     QMenu* getMenu(MenuType type);
     void addAction(QMenu* menu, QString text, int actionID);

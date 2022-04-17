@@ -27,12 +27,14 @@ public:
 
 public slots:
     bool addColumn();
+    bool insertColumn(bool beforeCurrent);
     bool deleteColumn();
     bool duplicateColumn();
     bool renameColumn();
     bool columnToTable();
 
     bool addRow();
+    bool insertRow(bool beforeCurrent);
     bool deleteRow();
     bool duplicateRow();
 

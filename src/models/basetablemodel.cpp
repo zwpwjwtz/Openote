@@ -48,12 +48,7 @@ int BaseTableModel::columnID(int columnIndex) const
 
 int BaseTableModel::columnIndex(int columnID) const
 {
-    for (int i=0; i<d->columnIDList.size(); i++)
-    {
-        if (d->columnIDList[i] == columnID)
-            return i;
-    }
-    return -1;
+    return d->getColumnIndexByID(columnID);
 }
 
 bool BaseTableModel::bindBookModel(BaseBookModel* model)
@@ -64,13 +59,21 @@ bool BaseTableModel::bindBookModel(BaseBookModel* model)
 
 bool BaseTableModel::setColumnReference(int columnIndex, int referenceID)
 {
-    if (columnIndex >= 0 && columnIndex < d->columnReferenceIDList.size())
-    {
-        d->columnReferenceIDList[columnIndex] = referenceID;
-        return true;
-    }
-    else
+    if (columnIndex < 0 || columnIndex > d->columnReferenceIDList.size())
         return false;
+
+    if (columnIndex == d->columnReferenceIDList.size())
+        d->columnReferenceIDList.push_back(referenceID);
+    else
+        d->columnReferenceIDList[columnIndex] = referenceID;
+
+    // Inform the parent book about the reference
+    ONBook* book = static_cast<ONBook*>(d->book);
+    if (referenceID > 0)
+        book->setColumnReference(ID, d->columnIDList[columnIndex], referenceID);
+    else
+        book->removeColumnReference(ID, d->columnIDList[columnIndex]);
+    return true;
 }
 
 void BaseTableModel::clear(int rowIndex, int columnIndex)
@@ -91,7 +94,7 @@ void BaseTableModel::clearColumn(int columnIndex)
 int BaseTableModel::newRow()
 {
     if (ONTable::newRow() > 0)
-        return countRow();
+        return countRow() - 1;
     else
         return -1;
 }
@@ -102,8 +105,9 @@ int BaseTableModel::newColumn(const std::string& name,
 {
     if (ONTable::newColumn(name, columnType) > 0)
     {
-        d->columnReferenceIDList.push_back(referenceID);
-        return countColumn();
+        int newIndex = countColumn() - 1;
+        setColumnReference(newIndex, referenceID);
+        return newIndex;
     }
     else
         return -1;
@@ -113,7 +117,7 @@ int BaseTableModel::insertRow(int rowIndex)
 {
     if (ONTable::newRow() > 0)
     {
-        moveRow(countRow(), rowIndex);
+        moveRow(countRow() - 1, rowIndex);
         return rowIndex;
     }
     else
@@ -127,7 +131,7 @@ int BaseTableModel::insertColumn(int columnIndex,
 {
     if (newColumn(name, columnType, referenceID) > 0)
     {
-        moveColumn(countColumn(), columnIndex);
+        moveColumn(countColumn() - 1, columnIndex);
         return columnIndex;
     }
     else
@@ -232,22 +236,42 @@ void BaseTableModel::moveRow(int fromIndex, int toIndex)
 void BaseTableModel::moveColumn(int fromIndex, int toIndex)
 {
     if (fromIndex < 0 || fromIndex >= d->columnIDList.size() ||
-        toIndex < 0 || toIndex >= d->columnIDList.size() ||
+        toIndex < 0 || toIndex > d->columnIDList.size() ||
         fromIndex == toIndex)
         return;
 
     int columnID = d->columnIDList[fromIndex];
+    int columnTypeID = d->columnTypeIDList[fromIndex];
+    int columnReferenceID = d->columnReferenceIDList[fromIndex];
+    std::string columnName = d->columnNameList[fromIndex];
+    ONTableColumn* column = d->columnList[fromIndex];
     if (fromIndex < toIndex)
     {
         for (int i = fromIndex; i<toIndex; i++)
+        {
             d->columnIDList[i] = d->columnIDList[i + 1];
+            d->columnTypeIDList[i] = d->columnTypeIDList[i + 1];
+            d->columnReferenceIDList[i] = d->columnReferenceIDList[i + 1];
+            d->columnNameList[i] = d->columnNameList[i + 1];
+            d->columnList[i] = d->columnList[i + 1];
+        }
     }
     else
     {
         for (int i = fromIndex; i>toIndex; i--)
+        {
             d->columnIDList[i] = d->columnIDList[i - 1];
+            d->columnTypeIDList[i] = d->columnTypeIDList[i - 1];
+            d->columnReferenceIDList[i] = d->columnReferenceIDList[i - 1];
+            d->columnNameList[i] = d->columnNameList[i - 1];
+            d->columnList[i] = d->columnList[i - 1];
+        }
     }
     d->columnIDList[toIndex] = columnID;
+    d->columnTypeIDList[toIndex] = columnTypeID;
+    d->columnReferenceIDList[toIndex] = columnReferenceID;
+    d->columnNameList[toIndex] = columnName;
+    d->columnList[toIndex] = column;
 }
 
 void BaseTableModel::removeRow(int rowIndex)

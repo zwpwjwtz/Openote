@@ -11,6 +11,7 @@ DialogColumnAdd::DialogColumnAdd(QWidget *parent) :
     referring = false;
     typeIndex = 0;
     referenceIndex = 0;
+    insertPosition = -1;
 }
 
 DialogColumnAdd::~DialogColumnAdd()

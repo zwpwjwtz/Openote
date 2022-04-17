@@ -66,6 +66,10 @@ BookActionDispatcher::onContextMenuClicked(BookContextMenu::MenuType menu,
                 view->duplicateColumn();    break;
             case ActionType::Renaming:
                 view->renameColumn();    break;
+            case ActionType::InsertingAhead:
+                view->insertColumn(true);    break;
+            case ActionType::InsertingAfter:
+                view->insertColumn(false);    break;
             default:;
         }  break;
 
@@ -78,6 +82,10 @@ BookActionDispatcher::onContextMenuClicked(BookContextMenu::MenuType menu,
                 view->deleteRow();    break;
             case ActionType::Duplicating:
                 view->duplicateRow();    break;
+            case ActionType::InsertingAhead:
+                view->insertRow(true);    break;
+            case ActionType::InsertingAfter:
+                view->insertRow(false);    break;
             default:;
         }  break;
 

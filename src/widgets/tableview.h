@@ -4,7 +4,7 @@
 #include <QTableView>
 
 
-class ColumnHeaderView;
+class TableHeaderView;
 
 class TableView : public QTableView
 {
@@ -23,13 +23,15 @@ protected:
     void mousePressEvent(QMouseEvent* event);
 
 signals:
+    void rowHeaderRightClicked(int rowIndex);
     void columnHeaderRightClicked(int columnIndex);
     void columnHeaderDoubleClicked(int columnIndex);
     void gridRightClicked(int rowIndex, int columnIndex);
 
 private:
     int tableID;
-    ColumnHeaderView* columnHeader;
+    TableHeaderView* rowHeader;
+    TableHeaderView* columnHeader;
 };
 
 #endif // TABLEVIEW_H
